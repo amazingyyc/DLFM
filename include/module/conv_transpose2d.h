@@ -1,0 +1,42 @@
+#ifndef NN_CONV_TRANSPOSE2D_H
+#define NN_CONV_TRANSPOSE2D_H
+
+#include "common/tensor.h"
+#include "module/module.h"
+
+namespace dlfm::nn {
+
+class ConvTranpose2dImpl: public ModuleImpl {
+public:
+  Tensor weight_;
+  Tensor bias_;
+
+  std::vector<size_t> kernel_size_;
+  std::vector<size_t> stride_;
+  std::vector<size_t> padding_;
+  std::vector<size_t> out_padding_;
+
+  ConvTranpose2dImpl(int64_t in_channel,
+                 int64_t out_channel,
+                 std::vector<size_t> kernel_size,
+                 std::vector<size_t> stride,
+                 std::vector<size_t> padding,
+                 std::vector<size_t> out_padding);
+public:
+  void load_torch_model(std::string model_folder) override;
+
+  Tensor forward(Tensor) override;
+};
+
+using ConvTranpose2d = std::shared_ptr<ConvTranpose2dImpl>;
+
+ConvTranpose2d conv_tranpose2d(int64_t in_channel,
+                               int64_t out_channel,
+                               std::vector<size_t> kernel_size,
+                               std::vector<size_t> stride,
+                               std::vector<size_t> padding,
+                               std::vector<size_t> out_padding);
+
+}
+
+#endif
