@@ -9,9 +9,11 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
 endif(MSVC)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+endif()
 
 # define for Eigen
 add_definitions(-DEIGEN_USE_THREADS -DEIGEN_FAST_MATH -DEIGEN_NO_CUDA)
@@ -43,6 +45,7 @@ set(DLFM_HEADER_FILES
   include/math/relu.h
   include/math/sigmoid.h
   include/math/unary_cwise.h
+  include/math/binary_cwise.h
   include/math/cast.h
   include/math/transpose.h
   include/math/pad.h
@@ -81,6 +84,7 @@ set(DLFM_SRC_FILES
   src/math/relu.cc
   src/math/sigmoid.cc
   src/math/unary_cwise.cc
+  src/math/binary_cwise.cc
   src/math/cast.cc
   src/math/transpose.cc
   src/math/pad.cc

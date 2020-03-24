@@ -42,6 +42,9 @@ public:
 
   int64_t stride(int64_t) const;
 
+  // enlarge current shape's rank to new rank by add 1.
+  Shape enlarge(int64_t rank) const;
+
   std::string to_str() const;
 };
 

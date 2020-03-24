@@ -125,6 +125,19 @@ int64_t Shape::stride(int64_t axis) const {
   return strides_[axis];
 }
 
+// enlarge current shape's rank to new rank by add 1.
+Shape Shape::enlarge(int64_t rank) const {
+  ARGUMENT_CHECK(rank >= this->rank() && rank <= MAX_SHAPE_RANK, "rank out of range");
+
+  auto new_dims = dims_;
+
+  while (new_dims.size() < rank) {
+    new_dims.insert(new_dims.begin(), 1);
+  }
+
+  return Shape(new_dims);
+}
+
 std::string Shape::to_str() const {
   std::stringstream ss;
 

@@ -4,6 +4,7 @@
 #include "math/relu.h"
 #include "math/sigmoid.h"
 #include "math/unary_cwise.h"
+#include "math/binary_cwise.h"
 #include "math/cast.h"
 #include "math/transpose.h"
 #include "math/pad.h"
@@ -95,6 +96,159 @@ Tensor Tensor::initialize_from_file(std::string path) {
   fstream.close();
 
   return *this;
+}
+
+// operator override
+Tensor Tensor::operator+=(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+  ARGUMENT_CHECK(other.rank() <= this->rank(), "rank error");
+
+  auto e_shape = other.shape().enlarge(this->rank());
+
+  for (int64_t i = 0; i < this->rank(); ++i) {
+    ARGUMENT_CHECK(1 == e_shape[i] || e_shape[i] == this->shape()[i], "shape error");
+  }
+
+  math::add(*this, other, *this);
+
+  return *this;
+}
+
+Tensor Tensor::operator-=(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+  ARGUMENT_CHECK(other.rank() <= this->rank(), "rank error");
+
+  auto e_shape = other.shape().enlarge(this->rank());
+
+  for (int64_t i = 0; i < this->rank(); ++i) {
+    ARGUMENT_CHECK(1 == e_shape[i] || e_shape[i] == this->shape()[i], "shape error");
+  }
+
+  math::sub(*this, other, *this);
+
+  return *this;
+}
+
+Tensor Tensor::operator*=(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+  ARGUMENT_CHECK(other.rank() <= this->rank(), "rank error");
+
+  auto e_shape = other.shape().enlarge(this->rank());
+
+  for (int64_t i = 0; i < this->rank(); ++i) {
+    ARGUMENT_CHECK(1 == e_shape[i] || e_shape[i] == this->shape()[i], "shape error");
+  }
+
+  math::multiply(*this, other, *this);
+
+  return *this;
+}
+
+Tensor Tensor::operator/=(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+  ARGUMENT_CHECK(other.rank() <= this->rank(), "rank error");
+
+  auto e_shape = other.shape().enlarge(this->rank());
+
+  for (int64_t i = 0; i < this->rank(); ++i) {
+    ARGUMENT_CHECK(1 == e_shape[i] || e_shape[i] == this->shape()[i], "shape error");
+  }
+
+  math::divide(*this, other, *this);
+
+  return *this;
+}
+
+Tensor Tensor::operator+(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+
+  int64_t o_rank = std::max<int64_t>(this->rank(), other.rank());
+
+  auto x_shape = this->shape().enlarge(o_rank);
+  auto y_shape = other.shape().enlarge(o_rank);
+
+  std::vector<int64_t> z_dims;
+
+  for (int64_t i = 0; i < o_rank; ++i) {
+    ARGUMENT_CHECK(x_shape[i] == y_shape[i] || (1 == x_shape[i] || 1 == y_shape[i]), "shape error");
+
+    z_dims.emplace_back(std::max<int64_t>(x_shape[i], y_shape[i]));
+  }
+
+  auto z = Tensor::create(z_dims, element_type_);
+
+  math::add(*this, other, z);
+
+  return z;
+}
+
+Tensor Tensor::operator-(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+
+  int64_t o_rank = std::max<int64_t>(this->rank(), other.rank());
+
+  auto x_shape = this->shape().enlarge(o_rank);
+  auto y_shape = other.shape().enlarge(o_rank);
+
+  std::vector<int64_t> z_dims;
+
+  for (int64_t i = 0; i < o_rank; ++i) {
+    ARGUMENT_CHECK(x_shape[i] == y_shape[i] || (1 == x_shape[i] || 1 == y_shape[i]), "shape error");
+
+    z_dims.emplace_back(std::max<int64_t>(x_shape[i], y_shape[i]));
+  }
+
+  auto z = Tensor::create(z_dims, element_type_);
+
+  math::sub(*this, other, z);
+
+  return z;
+}
+
+Tensor Tensor::operator*(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+
+  int64_t o_rank = std::max<int64_t>(this->rank(), other.rank());
+
+  auto x_shape = this->shape().enlarge(o_rank);
+  auto y_shape = other.shape().enlarge(o_rank);
+
+  std::vector<int64_t> z_dims;
+
+  for (int64_t i = 0; i < o_rank; ++i) {
+    ARGUMENT_CHECK(x_shape[i] == y_shape[i] || (1 == x_shape[i] || 1 == y_shape[i]), "shape error");
+
+    z_dims.emplace_back(std::max<int64_t>(x_shape[i], y_shape[i]));
+  }
+
+  auto z = Tensor::create(z_dims, element_type_);
+
+  math::multiply(*this, other, z);
+
+  return z;
+}
+
+Tensor Tensor::operator/(const Tensor &other) {
+  ARGUMENT_CHECK(this->element_type() == other.element_type(), "element type must same");
+
+  int64_t o_rank = std::max<int64_t>(this->rank(), other.rank());
+
+  auto x_shape = this->shape().enlarge(o_rank);
+  auto y_shape = other.shape().enlarge(o_rank);
+
+  std::vector<int64_t> z_dims;
+
+  for (int64_t i = 0; i < o_rank; ++i) {
+    ARGUMENT_CHECK(x_shape[i] == y_shape[i] || (1 == x_shape[i] || 1 == y_shape[i]), "shape error");
+
+    z_dims.emplace_back(std::max<int64_t>(x_shape[i], y_shape[i]));
+  }
+
+  auto z = Tensor::create(z_dims, element_type_);
+
+  math::divide(*this, other, z);
+
+  return z;
 }
 
 // operator override

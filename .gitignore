@@ -1,3 +1,4 @@
 /ios/deps
 /third_party/eigen
 /third_party/NNPACK
+.vs/

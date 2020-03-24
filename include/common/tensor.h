@@ -90,6 +90,17 @@ class Tensor {
   Tensor initialize_from_file(std::string path);
 
   // operator override
+  Tensor operator+=(const Tensor &other);
+  Tensor operator-=(const Tensor &other);
+  Tensor operator*=(const Tensor &other);
+  Tensor operator/=(const Tensor &other);
+
+  Tensor operator+(const Tensor &other);
+  Tensor operator-(const Tensor &other);
+  Tensor operator*(const Tensor &other);
+  Tensor operator/(const Tensor &other);
+
+  // operator override
   Tensor operator+=(float);
   Tensor operator-=(float);
   Tensor operator*=(float);
