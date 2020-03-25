@@ -3,6 +3,7 @@
 #include "math/fill.h"
 #include "math/relu.h"
 #include "math/sigmoid.h"
+#include "math/tanh.h"
 #include "math/unary_cwise.h"
 #include "math/binary_cwise.h"
 #include "math/cast.h"
@@ -365,6 +366,21 @@ Tensor Tensor::sigmoid(bool in_place) {
     return target;
   }
 }
+
+Tensor Tensor::tanh(bool in_place) {
+  if (in_place) {
+    math::tanh(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::tanh(*this, target);
+
+    return target;
+  }
+}
+
 
 Tensor Tensor::cast(ElementType to_type) {
   if (element_type_ == to_type) {

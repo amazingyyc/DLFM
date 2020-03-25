@@ -44,6 +44,7 @@ set(DLFM_HEADER_FILES
   include/math/fill.h
   include/math/relu.h
   include/math/sigmoid.h
+  include/math/tanh.h
   include/math/unary_cwise.h
   include/math/binary_cwise.h
   include/math/cast.h
@@ -83,6 +84,7 @@ set(DLFM_SRC_FILES
   src/math/fill.cc
   src/math/relu.cc
   src/math/sigmoid.cc
+  src/math/tanh.cc
   src/math/unary_cwise.cc
   src/math/binary_cwise.cc
   src/math/cast.cc

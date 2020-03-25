@@ -124,6 +124,8 @@ class Tensor {
 
   Tensor sigmoid(bool);
 
+  Tensor tanh(bool);
+
   Tensor cast(ElementType to_type);
 
   Tensor transpose(std::vector<size_t> axis);
