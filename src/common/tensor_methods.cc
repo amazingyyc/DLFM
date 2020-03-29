@@ -528,44 +528,6 @@ Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corne
   return output;
 }
 
-
-//Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {
-//  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
-//  ARGUMENT_CHECK(element_type_.is<float>(), "max pooling need float");
-//
-//  int64_t batch_size   = shape_[0];
-//  int64_t channels     = shape_[1];
-//  int64_t input_height = shape_[2];
-//  int64_t input_width  = shape_[3];
-//
-//  int64_t output_height = (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1;
-//  int64_t output_width  = (input_width  + 2 * padding[1] - kernel_size[1]) / stride[1] + 1;
-//
-//  auto output = Tensor::create({batch_size, channels, output_height, output_width}, element_type_);
-//
-//#ifdef HAS_NNPACK
-//  auto nnp_status = nnp_max_pooling_output(
-//    batch_size,
-//    channels,
-//	  {.height=(size_t)input_height, .width=(size_t)input_width},
-//    // top, right, bottom, left
-//    {.top=padding[0], .right=padding[1], .bottom=padding[0], .left=padding[1]},
-//    {.height=kernel[0], .width=kernel[1]},
-//    {.height=stride[0], .width=stride[1]},
-//    this->data<float>(),
-//    output.data<float>(),
-//    nnpack_threadpool());
-//
-//  if (nnp_status != nnp_status_success) {
-//    std::cout << "max_pooling2d get error, status:" << nnp_status << "\n";
-//  }
-//#else
-//  RUNTIME_ERROR("please build with nnpack");
-//#endif
-//
-//  return output;
-//}
-
 // conv2d
 Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding) {
   ARGUMENT_CHECK(3 == shape_.ndims() || (4 == shape_.ndims() && 1 == shape_[0]), "conv2 need shape ndims is 3 or 4 (batch must be 1)");
@@ -597,7 +559,7 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
 
 #ifdef HAS_NNPACK
   auto nnp_status = nnp_convolution_inference(
-    nnp_convolution_algorithm_auto,
+          nnp_convolution_algorithm_auto,
     nnp_convolution_transform_strategy_block_based,
     input_channel,
     output_channel,

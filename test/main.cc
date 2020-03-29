@@ -19,8 +19,8 @@ int main() {
   // conv2d_test();
   // conv_transpose2d_test();
   // max_pooling2d_test();
-  upsample2d_test();
-  // unet_test();
+  // upsample2d_test();
+  unet_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

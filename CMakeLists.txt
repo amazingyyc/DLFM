@@ -64,6 +64,7 @@ set(DLFM_HEADER_FILES
   include/module/unet.h
   include/module/tiny_unet.h
   include/module/sigmoid.h
+  include/module/upsample2d.h
 
   test/conv_transpose2d_test.h
   test/transpose_test.h
@@ -106,6 +107,7 @@ set(DLFM_SRC_FILES
   src/module/unet.cc
   src/module/tiny_unet.cc
   src/module/sigmoid.cc
+  src/module/upsample2d.cc
 
   test/conv_transpose2d_test.cc
   test/cast_test.cc

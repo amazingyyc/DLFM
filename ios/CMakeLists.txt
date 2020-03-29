@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.5)
 
 # build for ios cmd:
 # cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../toolchain/iOS.cmake -DPLATFORM=OS64 -DENABLE_BITCODE=0 -DARCHS=arm64 -DDEPLOYMENT_TARGET=10
-# Assertion failed: ((state_>>1) == 0), function ~Barrier, file third_party/eigen/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceThreadPool.h, line 34.
 project(dlfm_ios C CXX ASM)
 
 # c++17
@@ -33,20 +32,23 @@ add_subdirectory(${NNPACK_PREFIX} NNPACK)
 set(DLFM_SRCS
         ${DLFM_PREFIX}/src/common/device.cc
         ${DLFM_PREFIX}/src/common/shape.cc
-        ${DLFM_PREFIX}/src/common/tensor_storage.cc
         ${DLFM_PREFIX}/src/common/tensor.cc
         ${DLFM_PREFIX}/src/common/tensor_methods.cc
+        ${DLFM_PREFIX}/src/common/tensor_storage.cc
 
-        ${DLFM_PREFIX}/src/math/fill.cc
-        ${DLFM_PREFIX}/src/math/relu.cc
-        ${DLFM_PREFIX}/src/math/sigmoid.cc
-        ${DLFM_PREFIX}/src/math/unary_cwise.cc
+        ${DLFM_PREFIX}/src/math/binary_cwise.cc
         ${DLFM_PREFIX}/src/math/cast.cc
-        ${DLFM_PREFIX}/src/math/transpose.cc
-        ${DLFM_PREFIX}/src/math/pad.cc
         ${DLFM_PREFIX}/src/math/cat.cc
         ${DLFM_PREFIX}/src/math/conv_transpose2d.cc
+        ${DLFM_PREFIX}/src/math/fill.cc
         ${DLFM_PREFIX}/src/math/max_pooling2d.cc
+        ${DLFM_PREFIX}/src/math/pad.cc
+        ${DLFM_PREFIX}/src/math/relu.cc
+        ${DLFM_PREFIX}/src/math/sigmoid.cc
+        ${DLFM_PREFIX}/src/math/tanh.cc
+        ${DLFM_PREFIX}/src/math/transpose.cc
+        ${DLFM_PREFIX}/src/math/unary_cwise.cc
+        ${DLFM_PREFIX}/src/math/upsample2d.cc
 
         ${DLFM_PREFIX}/src/module/module.cc
         ${DLFM_PREFIX}/src/module/conv2d.cc
@@ -56,7 +58,8 @@ set(DLFM_SRCS
         ${DLFM_PREFIX}/src/module/relu.cc
         ${DLFM_PREFIX}/src/module/unet.cc
         ${DLFM_PREFIX}/src/module/tiny_unet.cc
-        ${DLFM_PREFIX}/src/module/sigmoid.cc)
+        ${DLFM_PREFIX}/src/module/sigmoid.cc
+        ${DLFM_PREFIX}/src/module/upsample2d.cc)
 
 add_library(dlfm STATIC ${DLFM_SRCS})
 target_include_directories(dlfm PRIVATE
