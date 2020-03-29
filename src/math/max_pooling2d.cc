@@ -111,8 +111,9 @@ void max_pooling2d_impl(Eigen::ThreadPoolDevice *eigen_device,
 
   int64_t num_threads = (int64_t)eigen_device->numThreads();
   int64_t block_size  = (channel + num_threads - 1) / num_threads;
+  int64_t need_num_threads = (channel + block_size - 1) / block_size;
 
-  Eigen::Barrier barrier((unsigned int)(num_threads));
+  Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
   auto block = [&barrier](T *x,
                           T *y,
@@ -147,7 +148,7 @@ void max_pooling2d_impl(Eigen::ThreadPoolDevice *eigen_device,
     barrier.Notify();
   };
 
-  for (int64_t i = 0; i < num_threads; ++i) {
+  for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, channel);
 

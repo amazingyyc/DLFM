@@ -5,6 +5,8 @@
 
 namespace dlfm::math {
 
+void assign(const Tensor&, Tensor&);
+
 void add(const Tensor&, float, Tensor&);
 
 void sub(const Tensor&, float, Tensor&);

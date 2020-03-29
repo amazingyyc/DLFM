@@ -53,6 +53,7 @@ set(DLFM_HEADER_FILES
   include/math/cat.h
   include/math/conv_transpose2d.h
   include/math/max_pooling2d.h
+  include/math/upsample2d.h
 
   include/module/module.h
   include/module/conv2d.h
@@ -72,6 +73,7 @@ set(DLFM_HEADER_FILES
   test/conv2d_test.h
   test/max_pooling2d_test.h
   test/unet_test.h
+  test/upsample2d_test.h
 )
 
 set(DLFM_SRC_FILES
@@ -93,6 +95,7 @@ set(DLFM_SRC_FILES
   src/math/cat.cc
   src/math/conv_transpose2d.cc
   src/math/max_pooling2d.cc
+  src/math/upsample2d.cc
 
   src/module/module.cc
   src/module/conv2d.cc
@@ -112,6 +115,7 @@ set(DLFM_SRC_FILES
   test/conv2d_test.cc
   test/max_pooling2d_test.cc
   test/unet_test.cc
+  test/upsample2d_test.cc
   test/main.cc
  )
 

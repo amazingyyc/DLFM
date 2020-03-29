@@ -117,6 +117,8 @@ class Tensor {
   // shape and type like this tensor
   Tensor like();
 
+  Tensor clone();
+
   // set all element of this tensor to be value.
   Tensor fill(float);
 
@@ -139,6 +141,8 @@ class Tensor {
   // corresponding pytorch
   Tensor max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride,
                      std::vector<size_t> padding, bool ceil_mode = false);
+
+  Tensor upsample2d(float scale_factor, std::string mode="nearest", bool align_corners = false);
 
   // conv2d
   Tensor conv2d(const Tensor &weight, const Tensor &bias,

@@ -2,3 +2,5 @@
 /third_party/eigen
 /third_party/NNPACK
 .vs/
+/cmake-build-debug
+/deps

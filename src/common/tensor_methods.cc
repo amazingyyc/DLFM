@@ -12,6 +12,7 @@
 #include "math/cat.h"
 #include "math/conv_transpose2d.h"
 #include "math/max_pooling2d.h"
+#include "math/upsample2d.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -332,6 +333,15 @@ Tensor Tensor::like() {
   return Tensor::create(shape_, element_type_);
 }
 
+Tensor Tensor::clone() {
+  auto target = this->like();
+
+  math::assign(*this, target);
+
+  return target;
+}
+
+
 // set all element of this tensor to be value.
 Tensor Tensor::fill(float value) {
   math::fill(*this, value);
@@ -488,6 +498,36 @@ Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t
 
   return output;
 }
+
+Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corners) {
+  ARGUMENT_CHECK(4 == this->shape_.rank(), "upsample2d need rank is 4");
+
+  if ("nearest" == mode) {
+    ARGUMENT_CHECK(false == align_corners, "nearest mode only support align_corners is false")
+  }
+
+  int64_t output_height = (int64_t)(scale_factor * shape_[2]);
+  int64_t output_width  = (int64_t)(scale_factor * shape_[3]);
+
+  std::vector<int64_t> output_dims = {shape_[0], shape_[1], output_height, output_width};
+
+  if (output_height == shape_[2] && output_width == shape_[3]) {
+    return this->clone();
+  }
+
+  auto output = Tensor::create(output_dims, element_type_);
+
+  if ("nearest" == mode) {
+    math::upsample_nearest2d(*this, output);
+  } else if ("bilinear" == mode) {
+    math::upsample_bilinear2d(*this, output, align_corners);
+  } else {
+    RUNTIME_ERROR("not support mode");
+  }
+
+  return output;
+}
+
 
 //Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {
 //  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
