@@ -3,55 +3,6 @@
 
 namespace dlfm::math {
 
-//template <typename T>
-//void max_pooling2d_impl(Eigen::ThreadPoolDevice *eigen_device,
-//                        T *x,
-//                        const Shape &xshape,
-//                        T *y,
-//                        const Shape &yshape,
-//                        std::vector<size_t> kernel_size,
-//                        std::vector<size_t> stride,
-//                        std::vector<size_t> padding) {
-//  int64_t batch = xshape[0];
-//  int64_t channel = xshape[1];
-//
-//  int64_t input_height = xshape[2];
-//  int64_t input_width  = xshape[3];
-//
-//  int64_t output_height = yshape[2];
-//  int64_t output_width  = yshape[3];
-//
-//  // xshape [batch_size, channel, input_height, input_width]
-//  // yshape [batch_size, channel, output_height, output_width]
-//  Eigen::TensorMap<Eigen::Tensor<T, 4, Eigen::RowMajor>> xvec(x, batch, channel, input_height, input_width);
-//  Eigen::TensorMap<Eigen::Tensor<T, 4, Eigen::RowMajor>> yvec(y, batch, channel, output_height, output_width);
-//
-//  // x -> [batch_size, input_height, input_width, channel]
-//  Eigen::array<Eigen::Index, 4> x_shuffle = { 0, 2, 3, 1 };
-//  Eigen::array<Eigen::Index, 4> extract_reshape = {batch * output_height * output_width, (int64_t)kernel_size[0], (int64_t)kernel_size[1], channel };
-//  Eigen::array<Eigen::Index, 2> maximum_axis = {1, 2};
-//  Eigen::array<Eigen::Index, 4> maximum_reshape = { batch, output_height, output_width, channel };
-//  Eigen::array<Eigen::Index, 4> y_shuffle = { 0, 3, 1, 2 };
-//
-//  Eigen::Index  padding_top    = padding[1];
-//  Eigen::Index  padding_bottom = (output_width  - 1) * stride[1] + kernel_size[1] - input_width  - padding_top;
-//  Eigen::Index  padding_left   = padding[0];
-//  Eigen::Index  padding_right  = (output_height - 1) * stride[0] + kernel_size[0] - input_height - padding_left;
-//
-//  yvec.device(*eigen_device) = xvec.shuffle(x_shuffle)
-//      .extract_image_patches(kernel_size[1], kernel_size[0],
-//                             stride[1], stride[0],
-//                             1, 1,
-//                             1, 1,
-//                             padding_top, padding_bottom,
-//                             padding_left, padding_right,
-//                             0)
-//      .reshape(extract_reshape)
-//      .maximum(maximum_axis)
-//      .reshape(maximum_reshape)
-//      .shuffle(y_shuffle);
-//}
-
 template <typename T>
 void max_pooling2d_block_impl(T *input,
                              T *output,

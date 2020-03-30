@@ -12,13 +12,12 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # install folder
 set(CMAKE_INSTALL_PREFIX ../dlfm)
-SET(CMAKE_BUILD_TYPE "Release")
 
 set(NNPACK_PREFIX ${PROJECT_SOURCE_DIR}/../third_party/NNPACK)
 set(NNPACK_DEP_PREFIX ${PROJECT_SOURCE_DIR}/../deps)

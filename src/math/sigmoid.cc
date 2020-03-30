@@ -6,7 +6,7 @@ namespace math {
 template <typename T>
 struct SigmoidExpr {
   inline T operator()(T x) const {
-    return 0.5 + 0.5 * tanh(0.5 * x);
+    return 0.5 + 0.5 * std::tanh(0.5 * x);
   }
 };
 

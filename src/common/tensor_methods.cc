@@ -13,6 +13,7 @@
 #include "math/conv_transpose2d.h"
 #include "math/max_pooling2d.h"
 #include "math/upsample2d.h"
+#include "math/matmul.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -315,17 +316,30 @@ Tensor Tensor::reshape(std::vector<int64_t> dims) {
 
   ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
 
-  shape_.reset(dims);
+  auto target = *this;
+  target.shape_.reset(dims);
 
-  return *this;
+  return target;
+}
+
+Tensor Tensor::reshape(std::vector<int64_t> dims) const {
+  Shape to_shape(dims);
+
+  ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
+
+  auto target = *this;
+  target.shape_.reset(dims);
+
+  return target;
 }
 
 Tensor Tensor::reshape(Shape &to_shape) {
   ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
 
-  shape_ = to_shape;
+  auto target = *this;
+  target.shape_ = to_shape;
 
-  return *this;
+  return target;
 }
 
 // shape and type like this tensor
@@ -528,6 +542,47 @@ Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corne
   return output;
 }
 
+Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
+  ARGUMENT_CHECK(2 == this->shape_.rank() && 2 == y.shape().rank(), "matmul only support rank is 2");
+  ARGUMENT_CHECK(element_type_ == y.element_type(), "matmul need element type same");
+
+  auto xrow = shape_[0];
+  auto xcol = shape_[1];
+
+  auto yrow = y.shape()[0];
+  auto ycol = y.shape()[1];
+
+  int64_t m, n;
+
+  if (transpose_a && transpose_b) {
+    ARGUMENT_CHECK(xrow == ycol, "shape error");
+
+    m = xcol;
+    n = yrow;
+  } else if (transpose_a) {
+    ARGUMENT_CHECK(xrow == yrow, "shape error");
+
+    m = xcol;
+    n = ycol;
+  } else if (transpose_b) {
+    ARGUMENT_CHECK(xcol == ycol, "shape error");
+
+    m = xrow;
+    n = yrow;
+  } else {
+    ARGUMENT_CHECK(xcol == yrow, "shape error");
+
+    m = xrow;
+    n = ycol;
+  }
+
+  auto z = Tensor::create({m, n}, element_type_);
+
+  math::matmul(*this, y, z, transpose_a, transpose_b);
+
+  return z;
+}
+
 // conv2d
 Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding) {
   ARGUMENT_CHECK(3 == shape_.ndims() || (4 == shape_.ndims() && 1 == shape_[0]), "conv2 need shape ndims is 3 or 4 (batch must be 1)");
@@ -596,6 +651,7 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
   ARGUMENT_CHECK(1 == bias.shape_.ndims(), "shape error");
   ARGUMENT_CHECK(shape_[1] == weight.shape_[0], "shape error");
   ARGUMENT_CHECK(bias.shape_[0] == weight.shape_[1], "shape error");
+  ARGUMENT_CHECK(1 == shape_[0], "conv_transpose2d need batch is 1");
 
   int64_t batch = shape_[0];
   int64_t in_channel = shape_[1];

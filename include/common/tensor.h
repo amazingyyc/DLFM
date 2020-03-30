@@ -112,6 +112,9 @@ class Tensor {
   Tensor operator/(float);
 
   Tensor reshape(std::vector<int64_t>);
+
+  Tensor reshape(std::vector<int64_t>) const;
+
   Tensor reshape(Shape &);
 
   // shape and type like this tensor
@@ -143,6 +146,8 @@ class Tensor {
                      std::vector<size_t> padding, bool ceil_mode = false);
 
   Tensor upsample2d(float scale_factor, std::string mode="nearest", bool align_corners = false);
+
+  Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
   Tensor conv2d(const Tensor &weight, const Tensor &bias,

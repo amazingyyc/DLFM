@@ -6,7 +6,7 @@ namespace math {
 template <typename T>
 struct TanhExpr {
   inline T operator()(T x) const {
-    return tanh(x);
+    return std::tanh(x);
   }
 };
 
