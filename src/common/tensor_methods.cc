@@ -4,6 +4,8 @@
 #include "math/relu.h"
 #include "math/sigmoid.h"
 #include "math/tanh.h"
+#include "math/sqrt.h"
+#include "math/square.h"
 #include "math/unary_cwise.h"
 #include "math/binary_cwise.h"
 #include "math/cast.h"
@@ -14,6 +16,7 @@
 #include "math/max_pooling2d.h"
 #include "math/upsample2d.h"
 #include "math/matmul.h"
+#include "math/mean.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -355,6 +358,61 @@ Tensor Tensor::clone() {
   return target;
 }
 
+Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
+  auto ndims = this->rank();
+
+  if (axis.empty()) {
+    for (int64_t i = 0 ; i < ndims; ++i) {
+      axis.emplace_back(i);
+    }
+  }
+
+  std::unordered_set<int64_t> reduce_axis;
+  std::vector<int64_t> keep_target_dims;
+  std::vector<int64_t> target_dims;
+
+  for (int i = 0; i < axis.size(); ++i) {
+    if (axis[i] < 0) {
+      axis[i] += ndims;
+    }
+
+    ARGUMENT_CHECK(0 <= axis[i] && axis[i] < ndims, "axis out of range");
+
+    reduce_axis.insert(axis[i]);
+  }
+
+  for (int i = 0; i < ndims; ++i) {
+    if (reduce_axis.find(i) != reduce_axis.end()) {
+      keep_target_dims.emplace_back(1);
+    } else {
+      keep_target_dims.emplace_back(this->shape_[i]);
+      target_dims.emplace_back(this->shape_[i]);
+    }
+  }
+
+  if (target_dims.empty()) {
+    target_dims.emplace_back(1);
+  }
+
+  auto target = Tensor::create(keep_target_dims, element_type_);
+
+  math::mean(*this, target);
+
+  if (!keep_dims) {
+    return target.reshape(target_dims);
+  }
+
+  return target;
+}
+
+Tensor Tensor::var(std::vector<int64_t> axis, bool keep_dims) {
+  // get mean
+  auto mean = this->mean(axis, true);
+
+  auto variance = (*this - mean).square(true).mean(axis, true);
+
+  return variance;
+}
 
 // set all element of this tensor to be value.
 Tensor Tensor::fill(float value) {
@@ -405,6 +463,33 @@ Tensor Tensor::tanh(bool in_place) {
   }
 }
 
+Tensor Tensor::sqrt(bool in_place) {
+  if (in_place) {
+    math::sqrt(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::sqrt(*this, target);
+
+    return target;
+  }
+}
+
+Tensor Tensor::square(bool in_place) {
+  if (in_place) {
+    math::square(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::square(*this, target);
+
+    return target;
+  }
+}
 
 Tensor Tensor::cast(ElementType to_type) {
   if (element_type_ == to_type) {
@@ -678,6 +763,16 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
                          out_padding);
 
   return output;
+}
+
+Tensor Tensor::instance_norm2d(float eps) {
+  ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
+
+  auto mean = this->mean({-1, -2}, true);
+  auto norm = (*this) - mean;
+  auto variance = norm.square(false).mean({-1, -2}, true);
+
+  return norm / (variance + eps).sqrt(true);
 }
 
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {

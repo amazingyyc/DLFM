@@ -122,6 +122,10 @@ class Tensor {
 
   Tensor clone();
 
+  Tensor mean(std::vector<int64_t> axis = {}, bool keep_dims = false);
+
+  Tensor var(std::vector<int64_t> axis = {}, bool keep_dims = false);
+
   // set all element of this tensor to be value.
   Tensor fill(float);
 
@@ -130,6 +134,10 @@ class Tensor {
   Tensor sigmoid(bool);
 
   Tensor tanh(bool);
+
+  Tensor sqrt(bool);
+
+  Tensor square(bool);
 
   Tensor cast(ElementType to_type);
 
@@ -158,6 +166,8 @@ class Tensor {
                           std::vector<size_t> stride,
                           std::vector<size_t> padding,
                           std::vector<size_t> out_padding);
+
+  Tensor instance_norm2d(float eps = 1e-05);
 
   ////////////////////////////////////////////////////////////////////////////////////
 

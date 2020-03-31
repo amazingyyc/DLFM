@@ -45,6 +45,8 @@ set(DLFM_HEADER_FILES
   include/math/relu.h
   include/math/sigmoid.h
   include/math/tanh.h
+  include/math/sqrt.h
+  include/math/square.h
   include/math/unary_cwise.h
   include/math/binary_cwise.h
   include/math/cast.h
@@ -55,6 +57,7 @@ set(DLFM_HEADER_FILES
   include/math/max_pooling2d.h
   include/math/upsample2d.h
   include/math/matmul.h
+  include/math/mean.h
 
   include/module/module.h
   include/module/conv2d.h
@@ -77,6 +80,7 @@ set(DLFM_HEADER_FILES
   test/unet_test.h
   test/upsample2d_test.h
   test/matmul_test.h
+  test/mean_test.h
 )
 
 set(DLFM_SRC_FILES
@@ -90,6 +94,8 @@ set(DLFM_SRC_FILES
   src/math/relu.cc
   src/math/sigmoid.cc
   src/math/tanh.cc
+  src/math/sqrt.cc
+  src/math/square.cc
   src/math/unary_cwise.cc
   src/math/binary_cwise.cc
   src/math/cast.cc
@@ -100,6 +106,7 @@ set(DLFM_SRC_FILES
   src/math/max_pooling2d.cc
   src/math/upsample2d.cc
   src/math/matmul.cc
+  src/math/mean.cc
 
   src/module/module.cc
   src/module/conv2d.cc
@@ -122,6 +129,7 @@ set(DLFM_SRC_FILES
   test/unet_test.cc
   test/upsample2d_test.cc
   test/matmul_test.cc
+  test/mean_test.cc
   test/main.cc
  )
 

@@ -10,6 +10,7 @@
 #include "upsample2d_test.h"
 #include "matmul_test.h"
 #include "unet_test.h"
+#include "mean_test.h"
 
 using namespace dlfm::test;
 
@@ -18,10 +19,12 @@ int main() {
   // pad_test();
   // cat_test();
   // conv2d_test();
-  conv_transpose2d_test();
+  // conv_transpose2d_test();
   // max_pooling2d_test();
   // upsample2d_test();
-  matmul_test();
+  // matmul_test();
+  // var_test();
+  instance_norm2d_test();
   // unet_test();
 
 #if defined(_MSC_VER)
