@@ -146,6 +146,8 @@ class Tensor {
   // pad like pytorh torch.nn.functional.pad(input, pad, mode='constant', value=0)
   Tensor pad(std::vector<size_t> paddings);
 
+  Tensor reflection_pad2d(std::vector<size_t> paddings);
+
   Tensor cat(const Tensor &, int64_t axis);
 
   // kernel, stride, padding size both 2
@@ -168,6 +170,7 @@ class Tensor {
                           std::vector<size_t> out_padding);
 
   Tensor instance_norm2d(float eps = 1e-05);
+  Tensor instance_norm2d(Tensor &scale, Tensor &shift, float eps = 1e-05);
 
   ////////////////////////////////////////////////////////////////////////////////////
 

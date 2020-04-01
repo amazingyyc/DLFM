@@ -17,6 +17,7 @@
 #include "math/upsample2d.h"
 #include "math/matmul.h"
 #include "math/mean.h"
+#include "math/reflection_pad2d.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -550,6 +551,27 @@ Tensor Tensor::pad(std::vector<size_t> paddings) {
   return target;
 }
 
+Tensor Tensor::reflection_pad2d(std::vector<size_t> paddings) {
+  ARGUMENT_CHECK(4 == this->shape().rank(), "reflection_pad2d need 4d tensor");
+  ARGUMENT_CHECK(1 == paddings.size() || 4 == paddings.size(), "paddings need 1/4 element");
+
+  while (paddings.size() < 4) {
+    paddings.emplace_back(paddings[0]);
+  }
+
+  auto target_dims = shape_.dim_vector();
+
+  target_dims[3] += (paddings[0] + paddings[1]);
+  target_dims[2] += (paddings[2] + paddings[3]);
+
+  auto target = Tensor::create(target_dims, element_type_);
+
+  math::reflection_pad2d(*this, target, paddings);
+
+  return target;
+}
+
+
 Tensor Tensor::cat(const Tensor &other, int64_t axis) {
   ARGUMENT_CHECK(shape_.ndims() == other.ndims(), "cat need 2 tensor ndims same");
   ARGUMENT_CHECK(0 <= axis && axis < other.ndims(), "axis out of range");
@@ -768,11 +790,62 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
 Tensor Tensor::instance_norm2d(float eps) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
 
-  auto mean = this->mean({-1, -2}, true);
-  auto norm = (*this) - mean;
-  auto variance = norm.square(false).mean({-1, -2}, true);
+  int64_t b = shape_[0];
+  int64_t c = shape_[1];
+  int64_t h = shape_[2];
+  int64_t w = shape_[3];
 
-  return norm / (variance + eps).sqrt(true);
+  auto input = this->reshape({ b, c, h * w });
+
+  // mean shape [b, c, 1]
+  auto mean = input.mean({ -1 }, true);
+
+  // norm [b, c, h * w]
+  auto norm = input - mean;
+
+  // var [b, c, 1]
+  auto variance = norm.square(false).mean({ -1 }, true);
+  variance += eps;
+
+  norm /= variance.sqrt(true);
+
+  return norm.reshape({ b, c, h, w });
+}
+
+Tensor Tensor::instance_norm2d(Tensor &scale, Tensor &shift, float eps) {
+  ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
+  ARGUMENT_CHECK(1 == scale.rank() && 1 == shift.rank(), "instance_norm2d need scale/shift rank is 1");
+  ARGUMENT_CHECK(shape_[1] == scale.shape()[0] && shape_[1] == shift.shape()[0], "shape error");
+
+  int64_t b = shape_[0];
+  int64_t c = shape_[1];
+  int64_t h = shape_[2];
+  int64_t w = shape_[3];
+
+  auto input = this->reshape({ b, c, h * w });
+
+  // mean shape [b, c, 1]
+  auto mean = input.mean({-1}, true);
+
+  // norm [b, c, h * w]
+  auto norm = input - mean;
+
+  // var [b, c, 1]
+  auto variance = norm.square(false).mean({-1}, true);
+  variance += eps;
+
+  norm /= variance.sqrt(true);
+
+  // out shape [b, c, h * w]
+  auto out = norm;
+
+  auto scale_b = scale.reshape({ 1, c, 1 });
+  auto shift_b = shift.reshape({ 1, c, 1 });
+
+  out *= scale_b;
+  out += shift_b;
+
+  return out.reshape({b, c, h, w});
 }
 
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {

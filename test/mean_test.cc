@@ -35,5 +35,15 @@ void instance_norm2d_test() {
   std::cout << v << "\n";
 }
 
+void reflection_pad2d_test() {
+  float tp[] = {0, 1, 2, 3, 4, 5, 6, 7, 8 };
+
+  auto t1 = Tensor::create_from(tp, { 1, 1, 3, 3 }, ElementType::from<float>());
+
+  auto v = t1.reflection_pad2d({ 1, 1, 2, 0 });
+
+  std::cout << v << "\n";
+}
+
 }
 }

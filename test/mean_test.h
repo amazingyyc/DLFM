@@ -10,6 +10,8 @@ void var_test();
 
 void instance_norm2d_test();
 
+void reflection_pad2d_test();
+
 }
 }
 

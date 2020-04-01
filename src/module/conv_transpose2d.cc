@@ -37,4 +37,13 @@ ConvTranpose2d conv_tranpose2d(int64_t in_channel,
       out_padding);
 }
 
+ConvTranpose2d conv_tranpose2d(int64_t in_channel,
+                               int64_t out_channel,
+                               size_t kernel_size,
+                               size_t stride,
+                               size_t padding,
+                               size_t out_padding) {
+  return conv_tranpose2d(in_channel, out_channel, { kernel_size , kernel_size }, { stride , stride }, { padding , padding }, { out_padding , out_padding });
+}
+
 }

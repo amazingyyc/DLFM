@@ -25,6 +25,7 @@ int main() {
   // matmul_test();
   // var_test();
   instance_norm2d_test();
+  // reflection_pad2d_test();
   // unet_test();
 
 #if defined(_MSC_VER)

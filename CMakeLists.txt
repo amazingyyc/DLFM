@@ -58,6 +58,7 @@ set(DLFM_HEADER_FILES
   include/math/upsample2d.h
   include/math/matmul.h
   include/math/mean.h
+  include/math/reflection_pad2d.h
 
   include/module/module.h
   include/module/conv2d.h
@@ -69,6 +70,7 @@ set(DLFM_HEADER_FILES
   include/module/tiny_unet.h
   include/module/sigmoid.h
   include/module/upsample2d.h
+  include/module/instance_norm2d.h
 
   test/conv_transpose2d_test.h
   test/transpose_test.h
@@ -107,6 +109,7 @@ set(DLFM_SRC_FILES
   src/math/upsample2d.cc
   src/math/matmul.cc
   src/math/mean.cc
+  src/math/reflection_pad2d.cc
 
   src/module/module.cc
   src/module/conv2d.cc
@@ -118,6 +121,7 @@ set(DLFM_SRC_FILES
   src/module/tiny_unet.cc
   src/module/sigmoid.cc
   src/module/upsample2d.cc
+  src/module/instance_norm2d.cc
 
   test/conv_transpose2d_test.cc
   test/cast_test.cc

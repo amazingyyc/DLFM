@@ -38,6 +38,13 @@ Conv2d conv2d(
         std::vector<size_t> stride,
         std::vector<size_t> padding);
 
+Conv2d conv2d(
+  int64_t in_channel,
+  int64_t out_channel,
+  size_t kernel_size,
+  size_t stride = 1,
+  size_t padding = 0);
+
 }
 
 #endif

@@ -58,7 +58,7 @@ public:
 
   void torch_name_scope(std::string) override;
 
-  std::vector <Module> sub_modules() override;
+  std::vector<Module> sub_modules() override;
 
   Tensor forward(Tensor) override;
 };

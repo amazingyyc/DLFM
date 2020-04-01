@@ -30,5 +30,13 @@ Conv2d conv2d(
   return std::make_shared<Conv2dImpl>(in_channel, out_channel, kernel_size, stride, padding);
 }
 
+Conv2d conv2d(
+  int64_t in_channel,
+  int64_t out_channel,
+  size_t kernel_size,
+  size_t stride,
+  size_t padding) {
+  return conv2d(in_channel, out_channel, { kernel_size, kernel_size }, { stride , stride }, { padding , padding });
+}
 
 }

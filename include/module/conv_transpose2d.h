@@ -37,6 +37,13 @@ ConvTranpose2d conv_tranpose2d(int64_t in_channel,
                                std::vector<size_t> padding,
                                std::vector<size_t> out_padding);
 
+ConvTranpose2d conv_tranpose2d(int64_t in_channel,
+                               int64_t out_channel,
+                               size_t kernel_size,
+                               size_t stride = 1,
+                               size_t padding = 0,
+                               size_t out_padding = 0);
+
 }
 
 #endif
