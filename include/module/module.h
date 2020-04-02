@@ -10,9 +10,9 @@ namespace dlfm::nn {
 
 #define ADD_SUB_MODULE(variable, builder, ...)     \
 {                                                  \
-  ##variable = ##builder(__VA_ARGS__);             \
-  sub_modules_.emplace_back(##variable);           \
-  ##variable->torch_name_scope(#variable);         \
+  variable = builder(__VA_ARGS__);                 \
+  sub_modules_.emplace_back(variable);             \
+  variable->torch_name_scope(#variable);           \
 }                                                  \
 
 class ModuleImpl {

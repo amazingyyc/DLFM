@@ -97,7 +97,7 @@ Tensor Tensor::initialize_from_file(std::string path) {
 
   Shape shape(dims);
 
-  ARGUMENT_CHECK(shape == shape_, "shape error");
+  ARGUMENT_CHECK(shape == shape_, "shape error, file:" << path << "tensor shape:" << shape_.to_str() << ", file shape:" << shape.to_str());
 
   fstream.read((char*)ptr(), num_bytes());
   fstream.close();
@@ -721,7 +721,7 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
 
 #ifdef HAS_NNPACK
   auto nnp_status = nnp_convolution_inference(
-          nnp_convolution_algorithm_auto,
+    nnp_convolution_algorithm_implicit_gemm,
     nnp_convolution_transform_strategy_block_based,
     input_channel,
     output_channel,
@@ -737,6 +737,7 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
     nullptr);
 
   if (nnp_status != nnp_status_success) {
+    RUNTIME_ERROR("please build with nnpack");
     std::cout << "conv2d get error, status:" << nnp_status << "\n";
   }
 
@@ -833,8 +834,9 @@ Tensor Tensor::instance_norm2d(Tensor &scale, Tensor &shift, float eps) {
   // var [b, c, 1]
   auto variance = norm.square(false).mean({-1}, true);
   variance += eps;
+  variance.sqrt(true);
 
-  norm /= variance.sqrt(true);
+  norm /= variance;
 
   // out shape [b, c, h * w]
   auto out = norm;

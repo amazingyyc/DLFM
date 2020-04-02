@@ -71,39 +71,47 @@ CartoonTransformer::CartoonTransformer() {
   ADD_SUB_MODULE(deconv03_1, conv2d, 64, 3, 7);
 }
 
+Tensor CartoonTransformer::test(Tensor x) {
+  auto yy =  ((*conv01_1)(x.reflection_pad2d(3)));
+  return (*in01_1)(yy);
+}
+
 Tensor CartoonTransformer::forward(Tensor x) {
   Tensor y, pre;
 
-  y   = (*in01_1)((*conv01_1)(x.reflection_pad2d(3))).relu(true);
-  y   = (*in02_1)((*conv02_2)((*conv02_1)(y))).relu(true);
-  pre = (*in03_1)((*conv03_2)((*conv03_1)(y))).relu(true);
+  y   = ((*in01_1)((*conv01_1)(x.reflection_pad2d(3)))).relu(true);
 
-  y   = (*in04_1)((*conv04_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in02_1)((*conv02_2)((*conv02_1)(y)))).relu(true);
+  pre = ((*in03_1)((*conv03_2)((*conv03_1)(y)))).relu(true);
+
+  y   = ((*in04_1)((*conv04_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in04_2)((*conv04_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in05_1)((*conv05_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in05_1)((*conv05_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in05_2)((*conv05_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in06_1)((*conv06_1)(pre.reflection_pad2d(1))).relu(true);
+  return pre;
+
+  y   = ((*in06_1)((*conv06_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in06_2)((*conv06_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in07_1)((*conv07_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in07_1)((*conv07_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in07_2)((*conv07_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in08_1)((*conv08_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in08_1)((*conv08_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in08_2)((*conv08_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in09_1)((*conv09_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in09_1)((*conv09_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in09_2)((*conv09_2)(y.reflection_pad2d(1))) + pre;
 
-  y   = (*in10_1)((*conv10_1)(pre.reflection_pad2d(1))).relu(true);
+  y   = ((*in10_1)((*conv10_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in10_2)((*conv10_2)(y.reflection_pad2d(1))) + pre;
 
-  y = (*in11_1)((*conv11_1)(pre.reflection_pad2d(1))).relu(true);
+  y = ((*in11_1)((*conv11_1)(pre.reflection_pad2d(1)))).relu(true);
   y = (*in11_2)((*conv11_2)(y.reflection_pad2d(1))) + pre;
 
-  y = (*in12_1)((*deconv01_2)((*deconv01_1)(y))).relu(true);
-  y = (*in13_1)((*deconv02_2)((*deconv02_1)(y))).relu(true);
+  y = ((*in12_1)((*deconv01_2)((*deconv01_1)(y)))).relu(true);
+  y = ((*in13_1)((*deconv02_2)((*deconv02_1)(y)))).relu(true);
 
   y = (*deconv03_1)(y.reflection_pad2d(3)).tanh(true);
 

@@ -77,6 +77,8 @@ public:
   CartoonTransformer();
 
   Tensor forward(Tensor) override;
+
+  Tensor test(Tensor);
 };
 
 }

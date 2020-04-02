@@ -33,7 +33,7 @@ include_directories(third_party)
 include_directories(third_party/eigen)
 
 file(GLOB_RECURSE DLFM_HEADER_FILES "include/*.h" "test/*.h")
-file(GLOB_RECURSE DLFM_HEADER_FILES "src/*.cc" "test/*.cc")
+file(GLOB_RECURSE DLFM_SRC_FILES "src/*.cc" "test/*.cc")
 
 add_executable(dlfm ${DLFM_HEADER_FILES} ${DLFM_SRC_FILES})
 

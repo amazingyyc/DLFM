@@ -59,7 +59,7 @@ Tensor TinyUp::forward(std::vector<Tensor> inputs) {
 }
 
 TinyUNet::TinyUNet(int64_t in_channels, int64_t out_channels) {
-  ADD_SUB_MODULE(input, sequential, { conv2d(in_channels, 32, 3, 1, 1),  relu(true) });
+  ADD_SUB_MODULE(input, sequential, { conv2d(in_channels, 32, 3, 1, 1), relu(true) });
 
   ADD_SUB_MODULE(down1, std::make_shared<TinyDown>, 32, 64);
   ADD_SUB_MODULE(down2, std::make_shared<TinyDown>, 64, 128);

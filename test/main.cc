@@ -10,6 +10,7 @@
 #include "upsample2d_test.h"
 #include "matmul_test.h"
 #include "mean_test.h"
+#include "test.h"
 
 using namespace dlfm::test;
 
@@ -23,9 +24,11 @@ int main() {
   // upsample2d_test();
   // matmul_test();
   // var_test();
-  instance_norm2d_test();
+  // instance_norm2d_test();
   // reflection_pad2d_test();
   // unet_test();
+  // conv2d_test();
+  cartoon_transformer_test();
 
 #if defined(_MSC_VER)
   std::cin.get();
