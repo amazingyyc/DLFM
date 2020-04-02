@@ -8,20 +8,13 @@ namespace dlfm::nn {
 
 class SequentialImpl : public ModuleImpl {
 public:
-  std::vector<Module> modules_;
-
   explicit SequentialImpl(std::vector<Module>);
 
 public:
   Module operator[](size_t);
 
   Tensor forward(Tensor) override;
-
-  void torch_name_scope(std::string) override;
-
-  std::vector<Module> sub_modules() override;
 };
-
 
 using Sequential = std::shared_ptr<SequentialImpl>;
 

@@ -20,14 +20,14 @@ public:
 public:
   InstanceNorm2dImpl(int64_t num_features, float eps, bool affine);
 
-  void load_torch_model(std::string model_folder) override;
+  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
 
   Tensor forward(Tensor) override;
 };
 
 using InstanceNorm2d = std::shared_ptr<InstanceNorm2dImpl>;
 
-InstanceNorm2d instance_norm2d(int64_t num_features, float eps, bool affine);
+InstanceNorm2d instance_norm2d(int64_t num_features, float eps = 1e-9, bool affine = true);
 
 }
 

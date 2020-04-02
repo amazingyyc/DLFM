@@ -10,55 +10,43 @@ namespace dlfm::nn {
 
 class TinyDown : public ModuleImpl {
 public:
-  Sequential op_;
+  Sequential op;
 
   TinyDown(int64_t in_channel, int64_t out_channel);
 
 public:
-  void torch_name_scope(std::string) override;
-
-  std::vector <Module> sub_modules() override;
-
   Tensor forward(Tensor) override;
 };
 
 class TinyUp : public ModuleImpl {
 public:
-  ConvTranpose2d up_;
-  Sequential conv_;
+  ConvTranpose2d up;
+  Sequential conv;
 
   TinyUp(int64_t in_channel, int64_t out_channel);
 
 public:
-  void torch_name_scope(std::string) override;
-
-  std::vector <Module> sub_modules() override;
-
   Tensor forward(std::vector <Tensor>) override;
 };
 
 class TinyUNet : public ModuleImpl {
 public:
-  Sequential input_;
+  Sequential input;
 
-  std::shared_ptr <TinyDown> down1_;
-  std::shared_ptr <TinyDown> down2_;
-  std::shared_ptr <TinyDown> down3_;
-  std::shared_ptr <TinyDown> down4_;
+  std::shared_ptr <TinyDown> down1;
+  std::shared_ptr <TinyDown> down2;
+  std::shared_ptr <TinyDown> down3;
+  std::shared_ptr <TinyDown> down4;
 
-  std::shared_ptr <TinyUp> up1_;
-  std::shared_ptr <TinyUp> up2_;
-  std::shared_ptr <TinyUp> up3_;
-  std::shared_ptr <TinyUp> up4_;
+  std::shared_ptr <TinyUp> up1;
+  std::shared_ptr <TinyUp> up2;
+  std::shared_ptr <TinyUp> up3;
+  std::shared_ptr <TinyUp> up4;
 
-  Sequential output_;
+  Sequential output;
 
 public:
   TinyUNet(int64_t in_channels, int64_t out_channels);
-
-  void torch_name_scope(std::string) override;
-
-  std::vector<Module> sub_modules() override;
 
   Tensor forward(Tensor) override;
 };

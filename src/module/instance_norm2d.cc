@@ -10,13 +10,18 @@ InstanceNorm2dImpl::InstanceNorm2dImpl(int64_t num_features, float eps, bool aff
   }
 }
 
-void InstanceNorm2dImpl::load_torch_model(std::string model_folder) {
+void InstanceNorm2dImpl::load_torch_model(std::string model_folder, std::string parent_name_scope) {
   if (affine_) {
-    scale_.initialize_from_file(model_folder + FILE_SEP + torch_name_scope_ + TORCH_NAME_SCOPE_SEP + "scale" + TORCH_MODEL_FILE_SUFFIX);
-    shift_.initialize_from_file(model_folder + FILE_SEP + torch_name_scope_ + TORCH_NAME_SCOPE_SEP + "shift" + TORCH_MODEL_FILE_SUFFIX);
+    std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+
+    if (parent_name_scope.empty()) {
+      name_scope = torch_name_scope_;
+    }
+
+    scale_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "scale" + TORCH_MODEL_FILE_SUFFIX);
+    shift_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "shift" + TORCH_MODEL_FILE_SUFFIX);
   }
 }
-
 
 Tensor InstanceNorm2dImpl::forward(Tensor input) {
   if (affine_) {
@@ -26,7 +31,7 @@ Tensor InstanceNorm2dImpl::forward(Tensor input) {
   }
 }
 
-InstanceNorm2d instance_norm2d(int64_t num_features, float eps = 1e-9, bool affine = true) {
+InstanceNorm2d instance_norm2d(int64_t num_features, float eps, bool affine) {
   return std::make_shared<InstanceNorm2dImpl>(num_features, eps, affine);
 }
 

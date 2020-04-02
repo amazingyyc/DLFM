@@ -1,7 +1,7 @@
 #ifndef UPSAMPLE2D_TEST_H
 #define UPSAMPLE2D_TEST_H
 
-#include "module/unet.h"
+#include "module/upsample2d.h"
 
 namespace dlfm {
 namespace test {

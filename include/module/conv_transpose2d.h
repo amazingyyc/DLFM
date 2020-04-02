@@ -23,7 +23,7 @@ public:
                  std::vector<size_t> padding,
                  std::vector<size_t> out_padding);
 public:
-  void load_torch_model(std::string model_folder) override;
+  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
 
   Tensor forward(Tensor) override;
 };

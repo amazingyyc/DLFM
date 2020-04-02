@@ -551,13 +551,13 @@ Tensor Tensor::pad(std::vector<size_t> paddings) {
   return target;
 }
 
+Tensor Tensor::reflection_pad2d(size_t padding) {
+  return this->reflection_pad2d({ padding , padding , padding , padding });
+}
+
 Tensor Tensor::reflection_pad2d(std::vector<size_t> paddings) {
   ARGUMENT_CHECK(4 == this->shape().rank(), "reflection_pad2d need 4d tensor");
-  ARGUMENT_CHECK(1 == paddings.size() || 4 == paddings.size(), "paddings need 1/4 element");
-
-  while (paddings.size() < 4) {
-    paddings.emplace_back(paddings[0]);
-  }
+  ARGUMENT_CHECK(4 == paddings.size(), "paddings need 1/4 element");
 
   auto target_dims = shape_.dim_vector();
 

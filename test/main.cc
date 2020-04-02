@@ -9,7 +9,6 @@
 #include "conv_transpose2d_test.h"
 #include "upsample2d_test.h"
 #include "matmul_test.h"
-#include "unet_test.h"
 #include "mean_test.h"
 
 using namespace dlfm::test;

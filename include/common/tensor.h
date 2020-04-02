@@ -146,6 +146,7 @@ class Tensor {
   // pad like pytorh torch.nn.functional.pad(input, pad, mode='constant', value=0)
   Tensor pad(std::vector<size_t> paddings);
 
+  Tensor reflection_pad2d(size_t padding);
   Tensor reflection_pad2d(std::vector<size_t> paddings);
 
   Tensor cat(const Tensor &, int64_t axis);
