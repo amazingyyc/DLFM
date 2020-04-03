@@ -40,7 +40,7 @@ void reflection_pad2d_test() {
 
   auto t1 = Tensor::create_from(tp, { 1, 1, 3, 3 }, ElementType::from<float>());
 
-  auto v = t1.reflection_pad2d({ 1, 1, 2, 0 });
+  auto v = t1.reflection_pad2d(2);
 
   std::cout << v << "\n";
 }

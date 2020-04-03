@@ -90,8 +90,6 @@ Tensor CartoonTransformer::forward(Tensor x) {
   y   = ((*in05_1)((*conv05_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in05_2)((*conv05_2)(y.reflection_pad2d(1))) + pre;
 
-  return pre;
-
   y   = ((*in06_1)((*conv06_1)(pre.reflection_pad2d(1)))).relu(true);
   pre = (*in06_2)((*conv06_2)(y.reflection_pad2d(1))) + pre;
 
