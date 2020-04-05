@@ -25,6 +25,16 @@ void var_test() {
   std::cout << v << "\n";
 }
 
+void std_test() {
+  float tp[] = { 1, 2, 3, 4 };
+
+  auto t1 = Tensor::create_from(tp, {1, 1, 2, 2 }, ElementType::from<float>());
+
+  auto v = t1.var({-1}, false, false);
+
+  std::cout << v << "\n";
+}
+
 void instance_norm2d_test() {
   float tp[] = { 1, 2, 3, 4, 5, 6, 7, 8};
 

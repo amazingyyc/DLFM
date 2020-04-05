@@ -17,6 +17,7 @@
 #include "math/upsample2d.h"
 #include "math/matmul.h"
 #include "math/mean.h"
+#include "math/sum.h"
 #include "math/reflection_pad2d.h"
 
 #ifdef HAS_NNPACK
@@ -406,13 +407,97 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
   return target;
 }
 
-Tensor Tensor::var(std::vector<int64_t> axis, bool keep_dims) {
-  // get mean
+Tensor Tensor::sum(std::vector<int64_t> axis, bool keep_dims) {
+  auto ndims = this->rank();
+
+  if (axis.empty()) {
+    for (int64_t i = 0 ; i < ndims; ++i) {
+      axis.emplace_back(i);
+    }
+  }
+
+  std::unordered_set<int64_t> reduce_axis;
+  std::vector<int64_t> keep_target_dims;
+  std::vector<int64_t> target_dims;
+
+  for (int i = 0; i < axis.size(); ++i) {
+    if (axis[i] < 0) {
+      axis[i] += ndims;
+    }
+
+    ARGUMENT_CHECK(0 <= axis[i] && axis[i] < ndims, "axis out of range");
+
+    reduce_axis.insert(axis[i]);
+  }
+
+  for (int i = 0; i < ndims; ++i) {
+    if (reduce_axis.find(i) != reduce_axis.end()) {
+      keep_target_dims.emplace_back(1);
+    } else {
+      keep_target_dims.emplace_back(this->shape_[i]);
+      target_dims.emplace_back(this->shape_[i]);
+    }
+  }
+
+  if (target_dims.empty()) {
+    target_dims.emplace_back(1);
+  }
+
+  auto target = Tensor::create(keep_target_dims, element_type_);
+
+  math::sum(*this, target);
+
+  if (!keep_dims) {
+    return target.reshape(target_dims);
+  }
+
+  return target;
+}
+
+Tensor Tensor::var(std::vector<int64_t> axis, bool keep_dims, bool unbiased) {
   auto mean = this->mean(axis, true);
 
-  auto variance = (*this - mean).square(true).mean(axis, true);
+  if (unbiased) {
+    auto sum = (*this - mean).square(true).sum(axis, keep_dims);
 
-  return variance;
+    int64_t N = 1;
+    auto ndims = this->ndims();
+
+    if (axis.empty()) {
+      N = this->shape().size();
+    } else {
+      std::unordered_set<int64_t> has;
+
+      for (int i = 0; i < axis.size(); ++i) {
+        if (axis[i] < 0) {
+          axis[i] += ndims;
+        }
+
+        ARGUMENT_CHECK(0 <= axis[i] && axis[i] < ndims, "axis out of range");
+        ARGUMENT_CHECK(has.find(axis[i]) == has.end(), "axis can not include duplicate axis");
+
+        has.insert(axis[i]);
+
+        N *= this->shape()[axis[i]];
+      }
+    }
+
+    N -= 1;
+
+    ARGUMENT_CHECK(0 != N, "N can not be 0");
+
+    sum /= float(N);
+
+    return sum;
+  } else {
+    return (*this - mean).square(true).mean(axis, keep_dims);
+  }
+}
+
+Tensor Tensor::std(std::vector<int64_t> axis, bool keep_dims, bool unbiased) {
+  auto variance = this->var(axis, keep_dims, unbiased);
+
+  return variance.sqrt(true);
 }
 
 // set all element of this tensor to be value.

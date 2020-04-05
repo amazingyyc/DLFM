@@ -124,7 +124,11 @@ class Tensor {
 
   Tensor mean(std::vector<int64_t> axis = {}, bool keep_dims = false);
 
-  Tensor var(std::vector<int64_t> axis = {}, bool keep_dims = false);
+  Tensor sum(std::vector<int64_t> axis = {}, bool keep_dims = false);
+
+  Tensor var(std::vector<int64_t> axis = {}, bool keep_dims = false, bool unbiased = true);
+
+  Tensor std(std::vector<int64_t> axis = {}, bool keep_dims = false, bool unbiased = true);
 
   // set all element of this tensor to be value.
   Tensor fill(float);
