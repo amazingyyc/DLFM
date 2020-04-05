@@ -1,12 +1,12 @@
 #include "common/tensor.h"
-#include "module/tiny_unet.h"
 #include "module/max_pooling2d.h"
 #include "module/conv2d.h"
 #include "module/relu.h"
 #include "module/sequential.h"
 #include "module/sigmoid.h"
+#include "network/tiny_unet.h"
 
-namespace dlfm::nn {
+namespace dlfm::nn::tiny_unet {
 
 TinyDown::TinyDown(int64_t in_channel, int64_t out_channel) {
   ARGUMENT_CHECK(out_channel == 2 * in_channel, "UNet Down need out_channel == 2 * in_channel");

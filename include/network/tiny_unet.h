@@ -6,7 +6,7 @@
 #include "module/sequential.h"
 #include "module/conv_transpose2d.h"
 
-namespace dlfm::nn {
+namespace dlfm::nn::tiny_unet {
 
 class TinyDown : public ModuleImpl {
 public:

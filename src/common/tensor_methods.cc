@@ -806,6 +806,7 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
 
 #ifdef HAS_NNPACK
   auto nnp_status = nnp_convolution_inference(
+    //nnp_convolution_algorithm_auto
     nnp_convolution_algorithm_implicit_gemm,
     nnp_convolution_transform_strategy_block_based,
     input_channel,
@@ -822,8 +823,8 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
     nullptr);
 
   if (nnp_status != nnp_status_success) {
-    RUNTIME_ERROR("please build with nnpack");
-    std::cout << "conv2d get error, status:" << nnp_status << "\n";
+    RUNTIME_ERROR("nnpack nnp_convolution_inference get error");
+    // std::cout << "conv2d get error, status:" << nnp_status << "\n";
   }
 
 #else

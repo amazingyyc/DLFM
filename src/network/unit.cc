@@ -17,6 +17,19 @@ LayerNorm::LayerNorm(int64_t num_features, float eps, bool affine)
   }
 }
 
+void LayerNorm::load_torch_model(std::string model_folder, std::string parent_name_scope) {
+  if (affine_) {
+    std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+
+    if (parent_name_scope.empty()) {
+      name_scope = torch_name_scope_;
+    }
+
+    gamma_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "gamma" + TORCH_MODEL_FILE_SUFFIX);
+    beta_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "beta" + TORCH_MODEL_FILE_SUFFIX);
+  }
+}
+
 Tensor LayerNorm::forward(Tensor x) {
   ARGUMENT_CHECK(4 == x.shape().ndims(), "shape dimension must be 4");
 
