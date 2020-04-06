@@ -24,8 +24,12 @@ void cartoon_transformer_test() {
   transformer.torch_name_scope("cartoongan");
   transformer.load_torch_model("/Users/yanyuanchi/code/Colorful_AI/colorize/cartoongan");
 
-  auto ones = Tensor::ones({1, 64, 4, 4});
-  auto output = transformer.test(ones);
+  auto ones  = Tensor::ones({1, 64, 4, 2});
+  auto zeros = Tensor::zeros({1, 64, 4, 2});
+
+  auto t = ones.cat(zeros, 3);
+
+  auto output = transformer.test(t);
 
   std::cout << output << "\n";
 }
