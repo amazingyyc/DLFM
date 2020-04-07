@@ -18,6 +18,8 @@
 #include "math/matmul.h"
 #include "math/mean.h"
 #include "math/sum.h"
+#include "math/slice.h"
+#include "math/reverse.h"
 #include "math/reflection_pad2d.h"
 
 #ifdef HAS_NNPACK
@@ -585,6 +587,33 @@ Tensor Tensor::cast(ElementType to_type) {
   auto target = Tensor::create(shape_, to_type);
 
   math::cast(*this, target);
+
+  return target;
+}
+
+Tensor Tensor::slice(std::vector<int64_t> offsets, std::vector<int64_t> extents) {
+  auto ndims = this->shape().ndims();
+
+  ARGUMENT_CHECK(offsets.size() == ndims && extents.size() == ndims, "offsets and extents size not correct");
+
+  for (int64_t i = 0; i < ndims; ++i) {
+    ARGUMENT_CHECK(offsets[i] >= 0 && offsets[i] < this->shape()[i], "offsets out of range");
+    ARGUMENT_CHECK(offsets[i] + extents[i] <= this->shape()[i], "extents out of range");
+  }
+
+  auto target = Tensor::create(extents, element_type_);
+
+  math::slice(*this, target, offsets, extents);
+
+  return target;
+}
+
+Tensor Tensor::reverse(std::vector<bool> reversed) {
+  ARGUMENT_CHECK(reversed.size() == this->shape().size(), "reversed size error");
+
+  auto target = this->like();
+
+  math::reverse(*this, target, reversed);
 
   return target;
 }

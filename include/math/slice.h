@@ -5,7 +5,7 @@
 
 namespace dlfm::math {
 
-void slice(const Tensor &x, Tensor &y, std::vector<int64_t> offsets, std::vector<int64_t> extents);
+void slice(const Tensor &x, Tensor &y, const std::vector<int64_t> &offsets, const std::vector<int64_t> &extents);
 
 }
 

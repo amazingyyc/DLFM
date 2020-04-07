@@ -145,6 +145,10 @@ class Tensor {
 
   Tensor cast(ElementType to_type);
 
+  Tensor slice(std::vector<int64_t> offsets, std::vector<int64_t> extents);
+
+  Tensor reverse(std::vector<bool>);
+
   Tensor transpose(std::vector<size_t> axis);
 
   // pad like pytorh torch.nn.functional.pad(input, pad, mode='constant', value=0)

@@ -13,7 +13,7 @@ namespace dlfm::nn::cartoon_transformer {
 class InstanceNormalization: public ModuleImpl {
 public:
   int64_t num_features_;
-  
+
   float eps_;
 
   Tensor scale_;

@@ -8,11 +8,6 @@
 
 namespace dlfm::nn::cartoon_transformer {
 
-// help funciton
-// std::make_shared<InstanceNormalization> instance_normalization(int64_t num_features, float eps=1e-9) {
-//   return 
-// }
-
 InstanceNormalization::InstanceNormalization(int64_t num_features, float eps)
   :num_features_(num_features), eps_(eps) {
   scale_ = Tensor::create({ num_features_ });

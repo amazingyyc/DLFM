@@ -5,7 +5,7 @@
 
 namespace dlfm::math {
 
-void reverse(const Tensor &x, Tensor &y, std::vector<bool>);
+void reverse(const Tensor &x, Tensor &y, const std::vector<bool>&);
 
 }
 

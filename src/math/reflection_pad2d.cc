@@ -52,7 +52,6 @@ void reflection_pad2d_block_impl(
     }
   }
 
-
   // step2 copy internal
   for (int64_t oy = 0; oy < output_height; ++oy) {
     int64_t iy = oy - pad_top;
@@ -73,36 +72,6 @@ void reflection_pad2d_block_impl(
       out += output_height * output_width;
     }
   }
-
-  /*for (int64_t oy = 0; oy < output_height; ++oy) {
-    int64_t iy = oy - pad_top;
-
-    if (oy < pad_top) {
-      iy = pad_top - oy;
-    } else if (oy >= pad_top + input_height) {
-      iy = 2 * input_height - oy + pad_top -2;
-    }
-
-    for (int64_t ox = 0; ox < output_width; ++ox) {
-      int64_t ix = ox - pad_left;
-
-      if (ox < pad_left) {
-        ix = pad_left - ox;
-      } else if (ox >= pad_left + input_width) {
-        ix = 2 * input_width - ox + pad_left - 2;
-      }
-
-      T *in  = input  + start_channel * input_height  * input_width  + iy * input_width   + ix;
-      T *out = output + start_channel * output_height * output_width + oy * output_height + ox;
-
-      for (int64_t c = start_channel; c < end_channel; ++c) {
-        out[0] = in[0];
-
-        in  += input_height * input_width;
-        out += output_height * output_width;
-      }
-    }
-  }*/
 }
 
 template <typename T>

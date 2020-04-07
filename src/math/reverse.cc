@@ -18,7 +18,7 @@ void reverse_impl(
     xdims[i] = xshape[i];
     ydims[i] = yshape[i];
 
-    reverse_dims = reverse[i];
+    reverse_dims[i] = reverse[i];
   }
 
   Eigen::TensorMap<Eigen::Tensor<T, ndims, Eigen::RowMajor>> xvec(x, xdims);
@@ -27,7 +27,7 @@ void reverse_impl(
   yvec.device(*eigen_device) = xvec.reverse(reverse_dims);
 }
 
-void reverse(const Tensor &x, Tensor &y, std::vector<bool> reverse) {
+void reverse(const Tensor &x, Tensor &y, const std::vector<bool> &reverse) {
   if (x.element_type().is<float>()) {
     if (1 == x.shape().ndims()) {
       reverse_impl<1, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), reverse);

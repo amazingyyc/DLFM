@@ -30,7 +30,7 @@ void slice_impl(
   yvec.device(*eigen_device) = xvec.slice(offsets, extents);
 }
 
-void slice(const Tensor &x, Tensor &y, std::vector<int64_t> offsets, std::vector<int64_t> extents) {
+void slice(const Tensor &x, Tensor &y, const std::vector<int64_t> &offsets, const std::vector<int64_t> &extents) {
   if (x.element_type().is<float>()) {
     if (1 == x.shape().ndims()) {
       slice_impl<1, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), offsets, extents);
