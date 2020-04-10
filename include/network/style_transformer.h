@@ -15,7 +15,7 @@ public:
   bool upsample;
   bool relu;
 
-  Sequential block;
+  Conv2d conv;
 
   InstanceNorm2d norm;
 

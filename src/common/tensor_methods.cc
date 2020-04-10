@@ -21,6 +21,7 @@
 #include "math/slice.h"
 #include "math/reverse.h"
 #include "math/reflection_pad2d.h"
+#include "math/clamp.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -502,6 +503,20 @@ Tensor Tensor::std(std::vector<int64_t> axis, bool keep_dims, bool unbiased) {
   return variance.sqrt(true);
 }
 
+Tensor Tensor::clamp(float min, float max, bool in_place) {
+  if (in_place) {
+    math::clamp(*this, *this, min, max);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::clamp(*this, target, min, max);
+
+    return target;
+  }
+}
+
 // set all element of this tensor to be value.
 Tensor Tensor::fill(float value) {
   math::fill(*this, value);
@@ -708,6 +723,47 @@ Tensor Tensor::cat(const Tensor &other, int64_t axis) {
   math::cat(*this, other, target, axis);
 
   return target;
+}
+
+Tensor Tensor::normalize(Tensor mean, Tensor std, bool in_place) {
+  ARGUMENT_CHECK(3 == this->ndims(), "normalize need tensor dimension is 3");
+  ARGUMENT_CHECK(1 == mean.ndims() && 1 == std.ndims(), "normalize need mean/std ndims is 1");
+  ARGUMENT_CHECK(this->shape()[0] == mean.shape()[0] && this->shape()[0] == std.shape()[0], "normalize need channel same");
+
+  auto channel = this->shape()[0];
+
+  if (in_place) {
+    (*this) -= mean.reshape({ channel, 1, 1 });
+    (*this) /= std.reshape({ channel, 1, 1 });
+
+    return *this;
+  } else {
+    auto target = (*this) - mean.reshape({ channel, 1, 1 });
+    target /= std.reshape({ channel, 1, 1 });
+
+    return target;
+  }
+}
+
+// (this * std) + mean
+Tensor Tensor::denormalize(Tensor mean, Tensor std, bool in_place) {
+  ARGUMENT_CHECK(3 == this->ndims(), "normalize need tensor dimension is 3");
+  ARGUMENT_CHECK(1 == mean.ndims() && 1 == std.ndims(), "normalize need mean/std ndims is 1");
+  ARGUMENT_CHECK(this->shape()[0] == mean.shape()[0] && this->shape()[0] == std.shape()[0], "normalize need channel same");
+
+  auto channel = this->shape()[0];
+
+  if (in_place) {
+    (*this) *= std.reshape({ channel, 1, 1 });
+    (*this) += mean.reshape({ channel, 1, 1 });
+
+    return *this;
+  } else {
+    auto target = (*this) * std.reshape({ channel, 1, 1 });
+    target += mean.reshape({ channel, 1, 1 });
+
+    return target;
+  }
 }
 
 Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {

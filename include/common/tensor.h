@@ -130,6 +130,8 @@ class Tensor {
 
   Tensor std(std::vector<int64_t> axis = {}, bool keep_dims = false, bool unbiased = true);
 
+  Tensor clamp(float min, float max, bool in_place=false);
+
   // set all element of this tensor to be value.
   Tensor fill(float);
 
@@ -158,6 +160,12 @@ class Tensor {
   Tensor reflection_pad2d(std::vector<size_t> paddings);
 
   Tensor cat(const Tensor &, int64_t axis);
+
+  // (this - mean) / std
+  Tensor normalize(Tensor mean, Tensor std, bool in_place=false);
+
+  // (this * std) + mean
+  Tensor denormalize(Tensor mean, Tensor std, bool in_place=false);
 
   // kernel, stride, padding size both 2
   // corresponding pytorch

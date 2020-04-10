@@ -15,10 +15,7 @@ ConvBlock::ConvBlock(
   upsample = will_upsample;
   relu = will_relu;
 
-  ADD_SUB_MODULE(block, sequential, {
-    reflection_pad2d(kernel_size / 2),
-    conv2d(in_channels, out_channels, kernel_size, stride)
-  });
+  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channels, kernel_size, stride, kernel_size/2);
 
   if (will_normalize) {
     ADD_SUB_MODULE(norm, instance_norm2d, out_channels, 1e-05, true);
@@ -26,12 +23,11 @@ ConvBlock::ConvBlock(
 }
 
 Tensor ConvBlock::forward(Tensor x) {
-  // torch.nn.functional.interpolate(input, size=None, scale_factor=None, mode='nearest', align_corners=None)
   if (upsample) {
-    x = x.upsample2d(2.0);
+    x = x.upsample2d(2, "bilinear");
   }
 
-  x = (*block)(x);
+  x = (*conv)(x);
 
   if (norm) {
     x = (*norm)(x);
@@ -47,7 +43,7 @@ Tensor ConvBlock::forward(Tensor x) {
 ResidualBlock::ResidualBlock(int64_t channels) {
   ADD_SUB_MODULE(block, sequential, {
     std::make_shared<ConvBlock>(channels, channels, 3, 1, false, true, true),
-    std::make_shared<ConvBlock>(channels, channels, 3, 1, false, true, true)
+    std::make_shared<ConvBlock>(channels, channels, 3, 1, false, true, false)
   });
 }
 
