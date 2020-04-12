@@ -350,6 +350,27 @@ Tensor Tensor::reshape(Shape &to_shape) {
   return target;
 }
 
+Tensor Tensor::unsqueeze(size_t axis) {
+  auto dims = this->shape().dim_vector();
+
+  ARGUMENT_CHECK(axis <= dims.size(), "unsqueeze out of range");
+
+  dims.insert(dims.begin() + axis, 1);
+
+  return this->reshape(dims);
+}
+
+Tensor Tensor::squeeze(size_t axis) {
+  auto dims = this->shape().dim_vector();
+
+  ARGUMENT_CHECK(axis < dims.size(), "squeeze out of range");
+  ARGUMENT_CHECK(1 == dims[axis], "squeeze axis dimension must be 1");
+
+  dims.erase(dims.begin() + axis);
+
+  return this->reshape(dims);
+}
+
 // shape and type like this tensor
 Tensor Tensor::like() {
   return Tensor::create(shape_, element_type_);
@@ -400,6 +421,17 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
   }
 
   auto target = Tensor::create(keep_target_dims, element_type_);
+
+  // shape same, just copy
+  if (this->shape() == target.shape()) {
+    math::assign(*this, target);
+
+    if (!keep_dims) {
+      return target.reshape(target_dims);
+    }
+
+    return target;
+  }
 
   math::mean(*this, target);
 

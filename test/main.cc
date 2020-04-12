@@ -1,15 +1,5 @@
 #include <iostream>
 
-#include "pad_test.h"
-#include "cast_test.h"
-#include "cat_test.h"
-#include "transpose_test.h"
-#include "conv2d_test.h"
-#include "max_pooling2d_test.h"
-#include "conv_transpose2d_test.h"
-#include "upsample2d_test.h"
-#include "matmul_test.h"
-#include "mean_test.h"
 #include "test.h"
 
 using namespace dlfm::test;
@@ -28,8 +18,9 @@ int main() {
   // reflection_pad2d_test();
   // unet_test();
   // conv2d_test();
-  cartoon_transformer_test();
+  // cartoon_transformer_test();
   // std_test();
+  style_transformer_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

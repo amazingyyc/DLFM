@@ -2,7 +2,15 @@
 cmake_minimum_required(VERSION 3.5)
 
 # build for ios cmd:
-# cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../toolchain/iOS.cmake -DPLATFORM=OS64 -DENABLE_BITCODE=0 -DARCHS=arm64 -DDEPLOYMENT_TARGET=10
+# cmake .. \
+# -DCMAKE_C_COMPILER /usr/local/bin/gcc-9 \
+# -DCMAKE_CXX_COMPILER /usr/local/bin/g++-9 \
+# -DCMAKE_BUILD_TYPE=Release \
+# -DCMAKE_TOOLCHAIN_FILE=../toolchain/iOS.cmake \
+# -DPLATFORM=OS64 \
+# -DENABLE_BITCODE=0 \
+# -DARCHS=arm64 \
+# -DDEPLOYMENT_TARGET=10
 project(dlfm_ios C CXX ASM)
 
 # c++17
@@ -12,8 +20,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon -fopenmp")
+# set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # install folder

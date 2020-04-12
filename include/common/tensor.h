@@ -117,6 +117,9 @@ class Tensor {
 
   Tensor reshape(Shape &);
 
+  Tensor unsqueeze(size_t axis);
+  Tensor squeeze(size_t axis);
+
   // shape and type like this tensor
   Tensor like();
 

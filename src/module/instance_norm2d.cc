@@ -18,8 +18,8 @@ void InstanceNorm2dImpl::load_torch_model(std::string model_folder, std::string 
       name_scope = torch_name_scope_;
     }
 
-    scale_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "scale" + TORCH_MODEL_FILE_SUFFIX);
-    shift_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "shift" + TORCH_MODEL_FILE_SUFFIX);
+    scale_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "weight" + TORCH_MODEL_FILE_SUFFIX);
+    shift_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "bias" + TORCH_MODEL_FILE_SUFFIX);
   }
 }
 

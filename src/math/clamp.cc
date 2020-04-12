@@ -8,7 +8,7 @@ struct ClampExpr {
   T min_value_;
   T max_value_;
 
-  ClampExpr(T min_value, max_value)
+  ClampExpr(T min_value, T max_value)
     : min_value_(min_value), max_value_(max_value) {
   }
 

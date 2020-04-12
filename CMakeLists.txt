@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
+# set to gcc compiler
+set(CMAKE_C_COMPILER /usr/local/bin/gcc-9)
+set(CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
+
 project(dlfm LANGUAGES CXX)
 
 # c++17
@@ -10,7 +14,7 @@ if(MSVC)
 endif(MSVC)
 
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -fopenmp")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()

@@ -46,9 +46,15 @@ class Transformer: public ModuleImpl {
 public:
   Sequential model;
 
+  // for nomalize and denomalize
+  Tensor mean;
+  Tensor std;
+
 public:
   Transformer();
 
+  // input [h, w, 3] uint8
+  // output [h, w, 3] uint8
   Tensor forward(Tensor) override;
 };
 

@@ -2,6 +2,7 @@
 #include "test.h"
 #include "network/tiny_unet.h"
 #include "network/cartoon_transformer.h"
+#include "network/style_transformer.h"
 
 namespace dlfm {
 namespace test {
@@ -30,6 +31,19 @@ void cartoon_transformer_test() {
   auto t = ones.cat(zeros, 3);
 
   auto output = transformer.test(t);
+
+  std::cout << output << "\n";
+}
+
+void style_transformer_test() {
+  nn::style_transformer::Transformer style_transformer;
+  style_transformer.torch_name_scope("transformer");
+  style_transformer.load_torch_model("/Users/yanyuanchi/code/StyleTransformer/dlfm_models/1");
+
+  auto input = Tensor::create({4, 4, 3}, ElementType::from<uint8_t>());
+  input.fill(125);
+
+  auto output = style_transformer(input);
 
   std::cout << output << "\n";
 }

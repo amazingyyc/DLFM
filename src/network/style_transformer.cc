@@ -65,10 +65,55 @@ Transformer::Transformer() {
     std::make_shared<ConvBlock>(64, 32, 3, 1, true),
     std::make_shared<ConvBlock>(32, 3, 9, 1, false, false, false),
   });
+
+  mean = Tensor::create({3});
+  std = Tensor::create({3});
+
+  float *mean_ptr = mean.data<float>();
+  float *std_ptr = std.data<float>();
+
+  // mean = np.array([0.485, 0.456, 0.406])
+  // std = np.array([0.229, 0.224, 0.225])
+  mean_ptr[0] = 0.485;
+  mean_ptr[1] = 0.456;
+  mean_ptr[2] = 0.406;
+
+  std_ptr[0] = 0.229;
+  std_ptr[1] = 0.224;
+  std_ptr[2] = 0.225;
 }
 
 Tensor Transformer::forward(Tensor x) {
-  return (*model)(x);
+  // x is [h, w, 3] uint8 image
+  ARGUMENT_CHECK(x.element_type().is<uint8_t>(), "style Transformer need uint8 input");
+  ARGUMENT_CHECK(3 == x.shape().ndims() && 3 == x.shape()[2], "style Transformer input shape error");
+  ARGUMENT_CHECK(x.shape()[0] >= 32 && 0 == x.shape()[0] % 4 && x.shape()[1] >= 32 && 0 == x.shape()[1] % 4,  "style Transformer input shape error");
+  
+  // -> [3, h, w]
+  x = x.transpose({2, 0, 1});
+  
+  // float [3, h, w]
+  x = x.cast(ElementType::from<float>());
+  x *= (1 / 255.0);
+
+  // normalize
+  x = x.normalize(mean, std, true);
+
+  // transform
+  // [1, 3, h, w]
+  x = (*model)(x.unsqueeze(0));
+
+  // [3, h, w]
+  x = x.squeeze(0);
+
+  // [3, h, w]
+  x = x.denormalize(mean, std, true);
+
+  // cast to uint8
+  x *= 255.0;
+  x = x.clamp(0, 255, true).cast(ElementType::from<uint8_t>());
+
+  return x.transpose({1, 2, 0});
 }
 
 }

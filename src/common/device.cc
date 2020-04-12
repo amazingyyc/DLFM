@@ -58,6 +58,9 @@ Device::Device(DeviceType type, int32_t id) : type_(type), id_(id) {
   nnpack_threadpool_ = pthreadpool_create(thread_count);
   nnp_initialize();
 #endif
+
+  // eigen multi-thread
+  Eigen::initParallel();
 }
 
 Device::~Device() {
