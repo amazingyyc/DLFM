@@ -20,8 +20,9 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon -fopenmp")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon -fopenmp")
 # set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # install folder
@@ -36,39 +37,6 @@ set(THIRD_PARTY_PREFIX ${PROJECT_SOURCE_DIR}/../third_party)
 add_subdirectory(${NNPACK_PREFIX} NNPACK)
 
 file(GLOB_RECURSE DLFM_SRCS "${DLFM_PREFIX}/src/*.cc")
-
-# src files
-# set(DLFM_SRCS
-#         ${DLFM_PREFIX}/src/common/device.cc
-#         ${DLFM_PREFIX}/src/common/shape.cc
-#         ${DLFM_PREFIX}/src/common/tensor.cc
-#         ${DLFM_PREFIX}/src/common/tensor_methods.cc
-#         ${DLFM_PREFIX}/src/common/tensor_storage.cc
-
-#         ${DLFM_PREFIX}/src/math/binary_cwise.cc
-#         ${DLFM_PREFIX}/src/math/cast.cc
-#         ${DLFM_PREFIX}/src/math/cat.cc
-#         ${DLFM_PREFIX}/src/math/conv_transpose2d.cc
-#         ${DLFM_PREFIX}/src/math/fill.cc
-#         ${DLFM_PREFIX}/src/math/max_pooling2d.cc
-#         ${DLFM_PREFIX}/src/math/pad.cc
-#         ${DLFM_PREFIX}/src/math/relu.cc
-#         ${DLFM_PREFIX}/src/math/sigmoid.cc
-#         ${DLFM_PREFIX}/src/math/tanh.cc
-#         ${DLFM_PREFIX}/src/math/transpose.cc
-#         ${DLFM_PREFIX}/src/math/unary_cwise.cc
-#         ${DLFM_PREFIX}/src/math/upsample2d.cc
-
-#         ${DLFM_PREFIX}/src/module/module.cc
-#         ${DLFM_PREFIX}/src/module/conv2d.cc
-#         ${DLFM_PREFIX}/src/module/conv_transpose2d.cc
-#         ${DLFM_PREFIX}/src/module/sequential.cc
-#         ${DLFM_PREFIX}/src/module/max_pooling2d.cc
-#         ${DLFM_PREFIX}/src/module/relu.cc
-#         ${DLFM_PREFIX}/src/module/unet.cc
-#         ${DLFM_PREFIX}/src/module/tiny_unet.cc
-#         ${DLFM_PREFIX}/src/module/sigmoid.cc
-#         ${DLFM_PREFIX}/src/module/upsample2d.cc)
 
 add_library(dlfm STATIC ${DLFM_SRCS})
 target_include_directories(dlfm PRIVATE

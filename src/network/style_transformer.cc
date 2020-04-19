@@ -24,25 +24,17 @@ ConvBlock::ConvBlock(
 
 Tensor ConvBlock::forward(Tensor x) {
   if (upsample) {
-    CostHelper::start("upsample2d");
     x = x.upsample2d(2, "bilinear");
-    CostHelper::end();
   }
 
-  CostHelper::start("conv");
   x = (*conv)(x);
-  CostHelper::end();
 
   if (norm) {
-    CostHelper::start("norm");
     x = (*norm)(x);
-    CostHelper::end();
   }
 
   if (relu) {
-    CostHelper::start("relu");
     x.relu(true);
-    CostHelper::end();
   }
 
   return x;
@@ -73,8 +65,6 @@ Transformer::Transformer() {
     std::make_shared<ConvBlock>(64, 32, 3, 1, true),
     std::make_shared<ConvBlock>(32, 3, 5, 1, false, false, false),
   });
-
-  model->print_log_ = true;
 
   mean = Tensor::create({3});
   std = Tensor::create({3});

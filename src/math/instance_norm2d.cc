@@ -93,7 +93,7 @@ void instance_norm2d_float_block_impl(
 
     for (; c < col_limit; c += 4) {
       float32x4_t xv = vld1q_f32(xptr + c);
-      float32x4_t tv = vmulq_f32(vsubq_f32(xv - meanv), variance_rsqrtv);
+      float32x4_t tv = vmulq_f32(vsubq_f32(xv, meanv), variance_rsqrtv);
       float32x4_t yv = vaddq_f32(vmulq_f32(tv, scalev), shiftv);
 
       vst1q_f32(yptr + c, yv);
