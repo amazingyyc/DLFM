@@ -38,14 +38,14 @@ void cartoon_transformer_test() {
 void style_transformer_test() {
   nn::style_transformer::Transformer style_transformer;
   style_transformer.torch_name_scope("transformer");
-  style_transformer.load_torch_model("/Users/yanyuanchi/code/StyleTransformer/dlfm_models/1");
+  style_transformer.load_torch_model("/Users/yanyuanchi/code/StyleTransformer/dlfm_models/1/model");
 
-  auto input = Tensor::create({4, 4, 3}, ElementType::from<uint8_t>());
+  auto input = Tensor::create({512, 512, 3}, ElementType::from<uint8_t>());
   input.fill(125);
 
   auto output = style_transformer(input);
 
-  std::cout << output << "\n";
+  //std::cout << output << "\n";
 }
 
 }

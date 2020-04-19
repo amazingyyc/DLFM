@@ -16,7 +16,7 @@ namespace dlfm::nn {
 }                                                  \
 
 class ModuleImpl {
-protected:
+public:
   // model name scope (used for loading pytorh model)
   std::string torch_name_scope_;
 

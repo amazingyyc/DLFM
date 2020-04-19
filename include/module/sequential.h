@@ -8,6 +8,7 @@ namespace dlfm::nn {
 
 class SequentialImpl : public ModuleImpl {
 public:
+  bool print_log_;
   explicit SequentialImpl(std::vector<Module>);
 
 public:

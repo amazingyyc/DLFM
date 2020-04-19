@@ -22,6 +22,7 @@
 #include "math/reverse.h"
 #include "math/reflection_pad2d.h"
 #include "math/clamp.h"
+#include "math/instance_norm2d.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -1021,36 +1022,11 @@ Tensor Tensor::instance_norm2d(Tensor &scale, Tensor &shift, float eps) {
   ARGUMENT_CHECK(1 == scale.rank() && 1 == shift.rank(), "instance_norm2d need scale/shift rank is 1");
   ARGUMENT_CHECK(shape_[1] == scale.shape()[0] && shape_[1] == shift.shape()[0], "shape error");
 
-  int64_t b = shape_[0];
-  int64_t c = shape_[1];
-  int64_t h = shape_[2];
-  int64_t w = shape_[3];
+  auto output = this->like();
 
-  auto input = this->reshape({ b, c, h * w });
+  math::instance_norm2d(*this, scale, shift, eps, output);
 
-  // mean shape [b, c, 1]
-  auto mean = input.mean({-1}, true);
-
-  // norm [b, c, h * w]
-  auto norm = input - mean;
-
-  // var [b, c, 1]
-  auto variance = norm.square(false).mean({-1}, true);
-  variance += eps;
-  variance.sqrt(true);
-
-  norm /= variance;
-
-  // out shape [b, c, h * w]
-  auto out = norm;
-
-  auto scale_b = scale.reshape({ 1, c, 1 });
-  auto shift_b = shift.reshape({ 1, c, 1 });
-
-  out *= scale_b;
-  out += shift_b;
-
-  return out.reshape({b, c, h, w});
+  return output;
 }
 
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {
