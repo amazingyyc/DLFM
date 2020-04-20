@@ -23,6 +23,7 @@
 #include "math/reflection_pad2d.h"
 #include "math/clamp.h"
 #include "math/instance_norm2d.h"
+#include "math/conv2d.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -894,11 +895,14 @@ Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
 }
 
 // conv2d
-Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding) {
-  ARGUMENT_CHECK(3 == shape_.ndims() || (4 == shape_.ndims() && 1 == shape_[0]), "conv2 need shape ndims is 3 or 4 (batch must be 1)");
+Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups) {
+  ARGUMENT_CHECK(groups >= 1, "groups must >= 1");
+  ARGUMENT_CHECK(4 == shape_.ndims() && 1 == shape_[0], "conv2d need shape ndims is 4 (batch must be 1)");
+  ARGUMENT_CHECK(0 == shape_[1] % groups, "input channel sould be divided by groups");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "weight ndims must be 4");
-  ARGUMENT_CHECK(shape_[-3] == weight.shape_[1], "input channel must same with weight");
-  ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "shape error");
+  ARGUMENT_CHECK(0 == weight.shape_[0] % groups, "weight shape error");
+  ARGUMENT_CHECK(shape_[1] / groups == weight.shape_[1], "weight shape error");
+  ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "biase shape error");
 
   int64_t input_channel = shape_[-3];
   int64_t input_height  = shape_[-2];
@@ -912,44 +916,40 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
   int64_t output_height = (input_height + 2 * padding[0] - kernel_height) / stride[0] + 1;
   int64_t output_width  = (input_width  + 2 * padding[1] - kernel_width)  / stride[1] + 1;
 
-  std::vector<int64_t> output_dims;
+  auto output = Tensor::create({ 1, output_channel, output_height, output_width }, element_type_);
 
-  if (4 == shape_.ndims()) {
-    output_dims = {1, output_channel, output_height, output_width};
-  } else {
-    output_dims = {output_channel, output_height, output_width};
-  }
-
-  auto output = Tensor::create(output_dims, element_type_);
-
-#ifdef HAS_NNPACK
-  auto nnp_status = nnp_convolution_inference(
-    //nnp_convolution_algorithm_auto
-    nnp_convolution_algorithm_implicit_gemm,
-    nnp_convolution_transform_strategy_block_based,
-    input_channel,
-    output_channel,
-    {.width=(size_t)input_width, .height=(size_t)input_height},
-    {.top=padding[0], .right=padding[1], .bottom=padding[0], .left=padding[1]},
-    {.width=(size_t)kernel_width, .height=(size_t)kernel_height},
-    {.width=stride[1], .height=stride[0]},
-    this->data<float>(),
-    weight.data<float>(),
-    bias.data<float>(),
-    output.data<float>(),
-    nnpack_threadpool(),
-    nullptr);
-
-  if (nnp_status != nnp_status_success) {
-    RUNTIME_ERROR("nnpack nnp_convolution_inference get error");
-    // std::cout << "conv2d get error, status:" << nnp_status << "\n";
-  }
-
-#else
-  RUNTIME_ERROR("please build with nnpack");
-#endif
+  math::conv2d(*this, weight, bias, output, stride, padding, groups);
 
   return output;
+
+//#ifdef HAS_NNPACK
+//  auto nnp_status = nnp_convolution_inference(
+//    //nnp_convolution_algorithm_auto
+//    nnp_convolution_algorithm_implicit_gemm,
+//    nnp_convolution_transform_strategy_block_based,
+//    input_channel,
+//    output_channel,
+//    {.width=(size_t)input_width, .height=(size_t)input_height},
+//    {.top=padding[0], .right=padding[1], .bottom=padding[0], .left=padding[1]},
+//    {.width=(size_t)kernel_width, .height=(size_t)kernel_height},
+//    {.width=stride[1], .height=stride[0]},
+//    this->data<float>(),
+//    weight.data<float>(),
+//    bias.data<float>(),
+//    output.data<float>(),
+//    nnpack_threadpool(),
+//    nullptr);
+//
+//  if (nnp_status != nnp_status_success) {
+//    RUNTIME_ERROR("nnpack nnp_convolution_inference get error");
+//    // std::cout << "conv2d get error, status:" << nnp_status << "\n";
+//  }
+//
+//#else
+//  RUNTIME_ERROR("please build with nnpack");
+//#endif
+//
+//  return output;
 }
 
 // transpose conv2d

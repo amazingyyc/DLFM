@@ -180,8 +180,7 @@ class Tensor {
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
-  Tensor conv2d(const Tensor &weight, const Tensor &bias,
-                std::vector<size_t> stride, std::vector<size_t> padding);
+  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups = 1);
 
   // transpose conv2d
   Tensor conv_transpose2d(const Tensor &weight, const Tensor &bias,
