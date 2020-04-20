@@ -13,10 +13,10 @@ void conv2d_float_impl(
   const Tensor &weight,
   const Tensor &bias,
   Tensor &output,
-  const std::vector<int64_t> &stride,
-  const std::vector<int64_t> &padding,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
   const int64_t groups) {
-  auto eigen_device = output.eigen_device().get(),
+  auto eigen_device = output.eigen_device().get();
 
   float *input_ptr  = input.data<float>();
   float *weight_ptr = weight.data<float>();
@@ -120,7 +120,7 @@ void conv2d_float_impl(
 }
 #endif
 
-void conv2d(const Tensor &input, const Tensor &weight, const Tensor &bias, Tenor &output, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups) {
+void conv2d(const Tensor &input, const Tensor &weight, const Tensor &bias, Tensor &output, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups) {
   ARGUMENT_CHECK(1 == input.shape()[0] && 1 == output.shape()[0], "conv2d need batch is 1");
 
   if (input.element_type().is<float>()) {

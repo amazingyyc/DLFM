@@ -921,35 +921,6 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
   math::conv2d(*this, weight, bias, output, stride, padding, groups);
 
   return output;
-
-//#ifdef HAS_NNPACK
-//  auto nnp_status = nnp_convolution_inference(
-//    //nnp_convolution_algorithm_auto
-//    nnp_convolution_algorithm_implicit_gemm,
-//    nnp_convolution_transform_strategy_block_based,
-//    input_channel,
-//    output_channel,
-//    {.width=(size_t)input_width, .height=(size_t)input_height},
-//    {.top=padding[0], .right=padding[1], .bottom=padding[0], .left=padding[1]},
-//    {.width=(size_t)kernel_width, .height=(size_t)kernel_height},
-//    {.width=stride[1], .height=stride[0]},
-//    this->data<float>(),
-//    weight.data<float>(),
-//    bias.data<float>(),
-//    output.data<float>(),
-//    nnpack_threadpool(),
-//    nullptr);
-//
-//  if (nnp_status != nnp_status_success) {
-//    RUNTIME_ERROR("nnpack nnp_convolution_inference get error");
-//    // std::cout << "conv2d get error, status:" << nnp_status << "\n";
-//  }
-//
-//#else
-//  RUNTIME_ERROR("please build with nnpack");
-//#endif
-//
-//  return output;
 }
 
 // transpose conv2d
