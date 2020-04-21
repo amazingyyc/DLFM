@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 # set to gcc compiler
-set(CMAKE_C_COMPILER /usr/local/bin/gcc-9)
-set(CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
+#set(CMAKE_C_COMPILER /usr/local/bin/gcc-9)
+#set(CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
 
 project(dlfm LANGUAGES CXX)
 
