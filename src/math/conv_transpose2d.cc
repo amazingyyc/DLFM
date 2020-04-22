@@ -101,52 +101,13 @@ void conv_transpose2d_impl(Eigen::ThreadPoolDevice *eigen_device,
 
   Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
-  auto block = [&barrier](
-    T *mat,
-    T *bias,
-    T *output,
-    int64_t input_channel,
-    int64_t input_height,
-    int64_t input_width,
-    int64_t output_channel,
-    int64_t start_output_channel,
-    int64_t end_output_channel,
-    int64_t output_height,
-    int64_t output_width,
-    int64_t kernel_height,
-    int64_t kernel_width,
-    int64_t stride_height,
-    int64_t stride_width,
-    int64_t pad_top,
-    int64_t pad_left) {
-    conv_transpose2d_block_impl(
-      mat,
-      bias,
-      output,
-      input_channel,
-      input_height,
-      input_width,
-      output_channel,
-      start_output_channel,
-      end_output_channel,
-      output_height,
-      output_width,
-      kernel_height,
-      kernel_width,
-      stride_height,
-      stride_width,
-      pad_top,
-      pad_left);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, output_channel);
 
-    eigen_device->enqueueNoNotification(
-      block,
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      &conv_transpose2d_block_impl<T>,
       mat,
       bias,
       output,

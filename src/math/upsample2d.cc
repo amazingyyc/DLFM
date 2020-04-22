@@ -59,33 +59,13 @@ void upsample_nearest2d_impl(
 
   Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
-  auto block = [&barrier](T *input,
-                   T *output,
-                   int64_t start_channel,
-                   int64_t end_channel,
-                   int64_t input_height,
-                   int64_t input_width,
-                   int64_t output_height,
-                   int64_t output_width) {
-    upsample_nearest2d_block_impl(
-        input,
-        output,
-        start_channel,
-        end_channel,
-        input_height,
-        input_width,
-        output_height,
-        output_width);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, channel);
 
-    eigen_device->enqueueNoNotification(
-        block,
+    eigen_device->enqueue_with_barrier(
+        &barrier,
+        &upsample_nearest2d_block_impl<T>,
         x,
         y,
         start_channel,
@@ -171,36 +151,13 @@ void upsample_bilinear2d_impl(
 
   Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
-  auto block = [&barrier](
-                     T *input,
-                     T *output,
-                     int64_t start_channel,
-                     int64_t end_channel,
-                     int64_t input_height,
-                     int64_t input_width,
-                     int64_t output_height,
-                     int64_t output_width,
-                     bool align_corners) {
-    upsample_bilinear2d_block_impl(
-        input,
-        output,
-        start_channel,
-        end_channel,
-        input_height,
-        input_width,
-        output_height,
-        output_width,
-        align_corners);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, channel);
 
-    eigen_device->enqueueNoNotification(
-        block,
+    eigen_device->enqueue_with_barrier(
+        &barrier,
+        &upsample_bilinear2d_block_impl<T>,
         x,
         y,
         start_channel,

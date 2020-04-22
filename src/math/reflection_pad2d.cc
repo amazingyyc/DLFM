@@ -101,44 +101,13 @@ void reflection_pad2d_impl(
 
   Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
-  auto block = [&barrier](
-    std::shared_ptr<Device> device,
-    T *intput,
-    T *output,
-    int64_t start_channel,
-    int64_t end_channel,
-    int64_t input_height,
-    int64_t input_width,
-    int64_t output_height,
-    int64_t output_width,
-    int64_t pad_top,
-    int64_t pad_bottom,
-    int64_t pad_left,
-    int64_t pad_right) {
-    reflection_pad2d_block_impl(
-      device,
-      intput,
-      output,
-      start_channel,
-      end_channel,
-      input_height,
-      input_width,
-      output_height,
-      output_width,
-      pad_top,
-      pad_bottom,
-      pad_left,
-      pad_right);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, channel);
 
-    eigen_device->enqueueNoNotification(
-      block,
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      &reflection_pad2d_block_impl<T>,
       device,
       x,
       y,

@@ -28,17 +28,11 @@ void relu_float_neon_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float
 
   Eigen::Barrier barrier((unsigned int)(num_threads));
 
-  auto block = [&barrier](float *x, float *y, int64_t start, int64_t end) {
-    relu_float_neon_block_impl(x, y, start, end);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < num_threads; ++i) {
     int start = i * block_size;
     int end = std::min<int64_t>(start + block_size, n);
 
-    eigen_device->enqueueNoNotification(block, x, y, start, end);
+    eigen_device->enqueue_with_barrier(&barrier, &relu_float_neon_block_impl, x, y, start, end);
   }
 
   barrier.Wait();

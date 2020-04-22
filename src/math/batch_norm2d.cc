@@ -69,7 +69,7 @@ void batch_norm2d_f32_impl(
   for (int64_t i = 0; i < b * c; ++i) {
     eigen_device->enqueue_with_barrier(
       &barrier,
-      batch_norm2d_f32_block_impl,
+      &batch_norm2d_f32_block_impl,
       x, mean, variance, scale, shift, eps, y, b, c, h, w, i);
   }
 

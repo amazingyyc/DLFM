@@ -119,24 +119,8 @@ void instance_norm2d_float_impl(
   int64_t w) {
   Eigen::Barrier barrier((unsigned int)(b * c));
 
-  auto block = [&barrier](
-    float *x,
-    float *scale,
-    float *shift,
-    float eps,
-    float *y,
-    int64_t b,
-    int64_t c,
-    int64_t h,
-    int64_t w,
-    int64_t idx) {
-    instance_norm2d_float_block_impl(x, scale, shift, eps, y, b, c, h, w, idx);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < b * c; ++i) {
-    eigen_device->enqueueNoNotification(block, x, scale, shift, eps, y, b, c, h, w, i);
+    eigen_device->enqueue_with_barrier(&barrier, &instance_norm2d_float_block_impl, x, scale, shift, eps, y, b, c, h, w, i);
   }
 
   barrier.Wait();

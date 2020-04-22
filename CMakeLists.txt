@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 # set to gcc compiler
-#set(CMAKE_C_COMPILER /usr/local/bin/gcc-9)
-#set(CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
+# set(CMAKE_C_COMPILER /usr/local/bin/gcc-9)
+# set(CMAKE_CXX_COMPILER /usr/local/bin/g++-9)
 
 project(dlfm LANGUAGES CXX)
 
@@ -14,9 +14,11 @@ if(MSVC)
 endif(MSVC)
 
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -fopenmp")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    find_package(OpenMP REQUIRED)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
 # define for Eigen
@@ -42,7 +44,7 @@ file(GLOB_RECURSE DLFM_SRC_FILES "src/*.cc" "test/*.cc")
 add_executable(dlfm ${DLFM_HEADER_FILES} ${DLFM_SRC_FILES})
 
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_link_libraries(dlfm PUBLIC pthreadpool nnpack)
+    #target_link_libraries(dlfm PUBLIC OpenMP::OpenMP_CXX pthreadpool nnpack)
 endif()
 
 # add_library(dlfm SHARED ${DLFM_HEADER_FILES} ${DLFM_SRC_FILES})

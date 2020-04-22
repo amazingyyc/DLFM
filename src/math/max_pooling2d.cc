@@ -66,46 +66,15 @@ void max_pooling2d_impl(Eigen::ThreadPoolDevice *eigen_device,
 
   Eigen::Barrier barrier((unsigned int)(need_num_threads));
 
-  auto block = [&barrier](T *x,
-                          T *y,
-                          int64_t start_channel,
-                          int64_t end_channel,
-                          int64_t input_height,
-                          int64_t input_width,
-                          int64_t output_height,
-                          int64_t output_width,
-                          int64_t kernel_height,
-                          int64_t kernel_width,
-                          int64_t stride_y,
-                          int64_t stride_x,
-                          int64_t pad_top,
-                          int64_t pad_left) {
-    max_pooling2d_block_impl(
-        x,
-        y,
-        start_channel,
-        end_channel,
-        input_height,
-        input_width,
-        output_height,
-        output_width,
-        kernel_height,
-        kernel_width,
-        stride_y,
-        stride_x,
-        pad_top,
-        pad_left);
-
-    barrier.Notify();
-  };
-
   for (int64_t i = 0; i < need_num_threads; ++i) {
     int start_channel = i * block_size;
     int end_channel = std::min<int64_t>(start_channel + block_size, channel);
 
-    eigen_device->enqueueNoNotification(
-        block,
-        x, y,
+    eigen_device->enqueue_with_barrier(
+        &barrier,
+        &max_pooling2d_block_impl<T>,
+        x,
+        y,
         start_channel,
         end_channel,
         input_height,
