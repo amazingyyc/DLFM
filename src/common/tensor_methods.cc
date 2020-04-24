@@ -24,6 +24,7 @@
 #include "math/clamp.h"
 #include "math/instance_norm2d.h"
 #include "math/conv2d.h"
+#include "math/var.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -31,7 +32,7 @@
 
 namespace dlfm {
 
-Tensor Tensor::create(std::vector<int64_t> dims, ElementType type) {
+Tensor Tensor::create(const std::vector<int64_t> &dims, ElementType type) {
   Shape shape(dims);
 
   auto storage = TensorStorage::create(shape.size() * type.byte_width());
@@ -39,13 +40,13 @@ Tensor Tensor::create(std::vector<int64_t> dims, ElementType type) {
   return Tensor(storage, 0, shape, type);
 }
 
-Tensor Tensor::create(Shape& shape, ElementType type) {
+Tensor Tensor::create(const Shape &shape, ElementType type) {
   auto storage = TensorStorage::create(shape.size() * type.byte_width());
 
   return Tensor(storage, 0, shape, type);
 }
 
-Tensor Tensor::create_from(void* ptr, std::vector<int64_t> dims, ElementType type) {
+Tensor Tensor::create_from(void* ptr, const std::vector<int64_t> &dims, ElementType type) {
   Shape shape(dims);
 
   auto storage = TensorStorage::create_from(ptr, shape.size() * type.byte_width());
@@ -53,13 +54,13 @@ Tensor Tensor::create_from(void* ptr, std::vector<int64_t> dims, ElementType typ
   return Tensor(storage, 0, shape, type);
 }
 
-Tensor Tensor::create_from(void* ptr, Shape& shape, ElementType type) {
+Tensor Tensor::create_from(void* ptr, const Shape &shape, ElementType type) {
   auto storage = TensorStorage::create_from(ptr, shape.size() * type.byte_width());
 
   return Tensor(storage, 0, shape, type);
 }
 
-Tensor Tensor::zeros(std::vector<int64_t> dims, ElementType type) {
+Tensor Tensor::zeros(const std::vector<int64_t> &dims, ElementType type) {
   auto tensor = Tensor::create(dims, type);
 
   tensor.fill(0);
@@ -67,7 +68,7 @@ Tensor Tensor::zeros(std::vector<int64_t> dims, ElementType type) {
   return tensor;
 }
 
-Tensor Tensor::ones(std::vector<int64_t> dims, ElementType type) {
+Tensor Tensor::ones(const std::vector<int64_t> &dims, ElementType type) {
   auto tensor = Tensor::create(dims, type);
 
   tensor.fill(1);
@@ -321,7 +322,7 @@ Tensor Tensor::operator/(float value) {
   return target;
 }
 
-Tensor Tensor::reshape(std::vector<int64_t> dims) {
+Tensor Tensor::reshape(const std::vector<int64_t> &dims) {
   Shape to_shape(dims);
 
   ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
@@ -332,7 +333,7 @@ Tensor Tensor::reshape(std::vector<int64_t> dims) {
   return target;
 }
 
-Tensor Tensor::reshape(std::vector<int64_t> dims) const {
+Tensor Tensor::reshape(const std::vector<int64_t> &dims) const {
   Shape to_shape(dims);
 
   ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
@@ -343,7 +344,7 @@ Tensor Tensor::reshape(std::vector<int64_t> dims) const {
   return target;
 }
 
-Tensor Tensor::reshape(Shape &to_shape) {
+Tensor Tensor::reshape(const Shape &to_shape) {
   ARGUMENT_CHECK(shape_.size() == to_shape.size(), "reshape need new shape's size must same as this");
 
   auto target = *this;
@@ -386,6 +387,10 @@ Tensor Tensor::clone() {
   return target;
 }
 
+Tensor Tensor::mean(int64_t axis, bool keep_dims) {
+  return this->mean(std::vector<int64_t>({ axis }), keep_dims);
+}
+
 Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
   auto ndims = this->rank();
 
@@ -396,7 +401,8 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
   }
 
   std::unordered_set<int64_t> reduce_axis;
-  std::vector<int64_t> keep_target_dims;
+
+  std::vector<int64_t> target_dims_keep;
   std::vector<int64_t> target_dims;
 
   for (int i = 0; i < axis.size(); ++i) {
@@ -411,9 +417,9 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
 
   for (int i = 0; i < ndims; ++i) {
     if (reduce_axis.find(i) != reduce_axis.end()) {
-      keep_target_dims.emplace_back(1);
+      target_dims_keep.emplace_back(1);
     } else {
-      keep_target_dims.emplace_back(this->shape_[i]);
+      target_dims_keep.emplace_back(this->shape_[i]);
       target_dims.emplace_back(this->shape_[i]);
     }
   }
@@ -422,7 +428,7 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
     target_dims.emplace_back(1);
   }
 
-  auto target = Tensor::create(keep_target_dims, element_type_);
+  auto target = Tensor::create(target_dims_keep, element_type_);
 
   // shape same, just copy
   if (this->shape() == target.shape()) {
@@ -430,18 +436,18 @@ Tensor Tensor::mean(std::vector<int64_t> axis, bool keep_dims) {
 
     if (!keep_dims) {
       return target.reshape(target_dims);
+    } else {
+      return target;
     }
-
-    return target;
   }
 
   math::mean(*this, target);
 
   if (!keep_dims) {
     return target.reshape(target_dims);
+  } else {
+    return target;
   }
-
-  return target;
 }
 
 Tensor Tensor::sum(std::vector<int64_t> axis, bool keep_dims) {
@@ -454,7 +460,8 @@ Tensor Tensor::sum(std::vector<int64_t> axis, bool keep_dims) {
   }
 
   std::unordered_set<int64_t> reduce_axis;
-  std::vector<int64_t> keep_target_dims;
+
+  std::vector<int64_t> target_dims_keep;
   std::vector<int64_t> target_dims;
 
   for (int i = 0; i < axis.size(); ++i) {
@@ -469,9 +476,9 @@ Tensor Tensor::sum(std::vector<int64_t> axis, bool keep_dims) {
 
   for (int i = 0; i < ndims; ++i) {
     if (reduce_axis.find(i) != reduce_axis.end()) {
-      keep_target_dims.emplace_back(1);
+      target_dims_keep.emplace_back(1);
     } else {
-      keep_target_dims.emplace_back(this->shape_[i]);
+      target_dims_keep.emplace_back(this->shape_[i]);
       target_dims.emplace_back(this->shape_[i]);
     }
   }
@@ -480,61 +487,86 @@ Tensor Tensor::sum(std::vector<int64_t> axis, bool keep_dims) {
     target_dims.emplace_back(1);
   }
 
-  auto target = Tensor::create(keep_target_dims, element_type_);
+  auto target = Tensor::create(target_dims_keep, element_type_);
+
+  // shape same, just copy
+  if (this->shape() == target.shape()) {
+    math::assign(*this, target);
+
+    if (!keep_dims) {
+      return target.reshape(target_dims);
+    } else {
+      return target;
+    }
+  }
 
   math::sum(*this, target);
 
   if (!keep_dims) {
     return target.reshape(target_dims);
+  } else {
+    return target;
   }
+}
+
+Tensor Tensor::var(int64_t axis, const Tensor &mean, bool unbiased) {
+  auto ndims = this->ndims();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+  ARGUMENT_CHECK(this->ndims() == mean.ndims(), "var need mean's dimension same");
+
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i == axis) {
+      ARGUMENT_CHECK(1 == mean.shape()[i], "mean shape error");
+    } else {
+      ARGUMENT_CHECK(this->shape()[i] == mean.shape()[i], "mean shape error");
+    }
+  }
+
+  auto target = Tensor::create(mean.shape(), mean.element_type());
+
+  math::var(*this, mean, axis, unbiased, target);
 
   return target;
 }
 
-Tensor Tensor::var(std::vector<int64_t> axis, bool keep_dims, bool unbiased) {
-  auto mean = this->mean(axis, true);
+Tensor Tensor::var(int64_t axis, bool keep_dims, bool unbiased) {
+  auto ndims = this->ndims();
 
-  if (unbiased) {
-    auto sum = (*this - mean).square(true).sum(axis, keep_dims);
+  if (axis < 0) {
+    axis += ndims;
+  }
 
-    int64_t N = 1;
-    auto ndims = this->ndims();
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
 
-    if (axis.empty()) {
-      N = this->shape().size();
-    } else {
-      std::unordered_set<int64_t> has;
+  auto mean = this->mean( axis, true);
+  auto target = this->var(axis, mean, unbiased);
 
-      for (int i = 0; i < axis.size(); ++i) {
-        if (axis[i] < 0) {
-          axis[i] += ndims;
-        }
+  if (!keep_dims) {
+    std::vector<int64_t> dims;
 
-        ARGUMENT_CHECK(0 <= axis[i] && axis[i] < ndims, "axis out of range");
-        ARGUMENT_CHECK(has.find(axis[i]) == has.end(), "axis can not include duplicate axis");
-
-        has.insert(axis[i]);
-
-        N *= this->shape()[axis[i]];
+    for (int64_t i = 0; i < ndims; ++i) {
+      if (i != axis) {
+        dims.emplace_back(this->shape()[i]);
       }
     }
 
-    N -= 1;
-
-    ARGUMENT_CHECK(0 != N, "N can not be 0");
-
-    sum /= float(N);
-
-    return sum;
+    return target.reshape(dims);
   } else {
-    return (*this - mean).square(true).mean(axis, keep_dims);
+    return target;
   }
 }
 
-Tensor Tensor::std(std::vector<int64_t> axis, bool keep_dims, bool unbiased) {
-  auto variance = this->var(axis, keep_dims, unbiased);
+Tensor Tensor::std(int64_t axis, const Tensor &mean, bool unbiased) {
+  return this->var(axis, mean, unbiased).sqrt(true);
+}
 
-  return variance.sqrt(true);
+Tensor Tensor::std(int64_t axis, bool keep_dims, bool unbiased) {
+  return this->var(axis, keep_dims, unbiased).sqrt(true);
 }
 
 Tensor Tensor::clamp(float min, float max, bool in_place) {
@@ -966,29 +998,14 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
 Tensor Tensor::instance_norm2d(float eps) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
 
-  int64_t b = shape_[0];
-  int64_t c = shape_[1];
-  int64_t h = shape_[2];
-  int64_t w = shape_[3];
+  auto output = this->like();
 
-  auto input = this->reshape({ b, c, h * w });
+  math::instance_norm2d(*this, eps, output);
 
-  // mean shape [b, c, 1]
-  auto mean = input.mean({ -1 }, true);
-
-  // norm [b, c, h * w]
-  auto norm = input - mean;
-
-  // var [b, c, 1]
-  auto variance = norm.square(false).mean({ -1 }, true);
-  variance += eps;
-
-  norm /= variance.sqrt(true);
-
-  return norm.reshape({ b, c, h, w });
+  return output;
 }
 
-Tensor Tensor::instance_norm2d(Tensor &scale, Tensor &shift, float eps) {
+Tensor Tensor::instance_norm2d(const Tensor &scale, const Tensor &shift, float eps) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
   ARGUMENT_CHECK(1 == scale.rank() && 1 == shift.rank(), "instance_norm2d need scale/shift rank is 1");
   ARGUMENT_CHECK(shape_[1] == scale.shape()[0] && shape_[1] == shift.shape()[0], "shape error");

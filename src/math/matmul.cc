@@ -4,25 +4,22 @@
 namespace dlfm::math {
 
 template <typename T>
-void matmul_impl(T *x, T *y, T *z, int64_t m, int64_t k, int64_t n, bool transpose_a, bool transpose_b) {
-  auto xrow = m;
-  auto xcol = k;
-  auto yrow = k;
-  auto ycol = n;
-
-  if (transpose_a) {
-    xrow = k;
-    xcol = m;
-  }
-
-  if (transpose_b) {
-    yrow = n;
-    ycol = k;
-  }
-
+void matmul_impl(
+  T *x,
+  int64_t xrow,
+  int64_t xcol,
+  T *y,
+  int64_t yrow,
+  int64_t ycol,
+  T *z,
+  int64_t zrow,
+  int64_t zcol,
+  bool transpose_a,
+  bool transpose_b) {
+  // ios compiler not support openmp, matmul is single thread
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> xm(x, xrow, xcol);
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> ym(y, yrow, ycol);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> zm(z, m, n);
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> zm(z, zrow, zcol);
 
   if (transpose_a && transpose_b) {
     zm.noalias() = (ym * xm).transpose();
@@ -36,17 +33,19 @@ void matmul_impl(T *x, T *y, T *z, int64_t m, int64_t k, int64_t n, bool transpo
 }
 
 void matmul(const Tensor &x, const Tensor &y, Tensor &z, bool transpose_a, bool transpose_b) {
-  auto m = z.shape()[0];
-  auto n = z.shape()[1];
-
-  auto k = x.shape()[1];
-
-  if (transpose_a) {
-    k = x.shape()[0];
-  }
-
   if (x.element_type().is<float>()) {
-    matmul_impl<float>(x.data<float>(), y.data<float>(), z.data<float>(), m, k, n, transpose_a, transpose_b);
+    matmul_impl<float>(
+      x.data<float>(),
+      x.shape()[0],
+      x.shape()[1],
+      y.data<float>(),
+      y.shape()[0],
+      y.shape()[1],
+      z.data<float>(),
+      z.shape()[0],
+      z.shape()[1],
+      transpose_a,
+      transpose_b);
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "test.h"
+#include "mean_test.h"
 
 using namespace dlfm::test;
 
@@ -20,7 +21,8 @@ int main() {
   // conv2d_test();
   // cartoon_transformer_test();
   // std_test();
-  style_transformer_test();
+  //style_transformer_test();
+  var_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

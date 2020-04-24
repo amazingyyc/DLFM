@@ -13,7 +13,7 @@ struct ClampExpr {
   }
 
   inline T operator()(T x) const {
-    return std::min(std::max(x, min_value_), max_value_);
+    return (std::min)((std::max)(x, min_value_), max_value_);
   }
 };
 

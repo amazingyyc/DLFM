@@ -33,18 +33,25 @@ void LayerNorm::load_torch_model(std::string model_folder, std::string parent_na
 Tensor LayerNorm::forward(Tensor x) {
   ARGUMENT_CHECK(4 == x.shape().ndims(), "shape dimension must be 4");
 
-  auto mean = x.mean({1, 2, 3}, true);
-  auto std = x.std({1, 2, 3}, true);
+  auto b = x.shape()[0];
+  auto c = x.shape()[1];
+  auto h = x.shape()[2];
+  auto w = x.shape()[3];
+
+  auto mean = x.reshape({b, c * h * w}).mean(-1, true).reshape({ b, 1, 1, 1 });
+  auto std = x.reshape({ b, c * h * w }).std(-1, mean).reshape({ b, 1, 1, 1 });
+
   std += eps_;
 
-  x = (x - mean) / std;
+  auto y = x - mean;
+  y /= std;
 
   if (affine_) {
-    x *= gamma_.reshape({1, num_features_, 1, 1});
-    x += beta_.reshape({1, num_features_, 1, 1});
+    y *= gamma_.reshape({ 1, c, 1, 1 });
+    y += beta_.reshape({ 1, c, 1, 1 });
   }
 
-  return x;
+  return y;
 }
 
 // Conv2dBlock
@@ -118,12 +125,12 @@ Tensor ResBlocks::forward(Tensor x) {
 
 // ContentEncoder
 ContentEncoder::ContentEncoder(
-    int64_t n_downsample, 
-    int64_t n_res, 
-    int64_t input_dim, 
-    int64_t dim, 
-    std::string norm, 
-    std::string activ, 
+    int64_t n_downsample,
+    int64_t n_res,
+    int64_t input_dim,
+    int64_t dim,
+    std::string norm,
+    std::string activ,
     std::string pad_type) {
   std::vector<Module> blocks;
 
@@ -135,7 +142,7 @@ ContentEncoder::ContentEncoder(
   }
 
   blocks.emplace_back(std::make_shared<ResBlocks>(n_res, dim, norm, activ, pad_type));
-  
+
   ADD_SUB_MODULE(model, sequential, blocks);
 }
 

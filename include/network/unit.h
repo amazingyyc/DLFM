@@ -14,7 +14,9 @@ namespace dlfm::nn::unit {
 class LayerNorm: public ModuleImpl {
 public:
   float eps_;
+
   bool affine_;
+
   int64_t num_features_;
 
   Tensor gamma_;
@@ -37,13 +39,13 @@ public:
   Conv2d conv;
 
   Conv2dBlock(
-    int64_t input_dim, 
-    int64_t output_dim, 
-    size_t kernel_size, 
+    int64_t input_dim,
+    int64_t output_dim,
+    size_t kernel_size,
     size_t stride,
     size_t padding = 0,
     std::string norm_type="none",
-    std::string activation_type="relu", 
+    std::string activation_type="relu",
     std::string pad_type="zero");
 
 public:

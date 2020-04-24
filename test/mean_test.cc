@@ -16,13 +16,17 @@ void mean_test() {
 }
 
 void var_test() {
-  float tp[] = { 1, 2, 3, 4 };
+  float tp[] = { 1, 2, 3, 4, 5, 6, 7, 8};
 
-  auto t1 = Tensor::create_from(tp, {1, 1, 2, 2 }, ElementType::from<float>());
+  auto t1 = Tensor::create_from(tp, {2, 2, 2 }, ElementType::from<float>());
 
-  auto v = t1.var({-1, -2}, true);
+  auto mean = t1.mean(-2, true);
+  auto var = t1.var(-1, true, false);
+  auto std = t1.std(-1, true, false);
 
-  std::cout << v << "\n";
+  std::cout << mean << "\n";
+  std::cout << var << "\n";
+  std::cout << std << "\n";
 }
 
 void std_test() {
