@@ -16,7 +16,7 @@ float32x4_t vsqrtq_f32(float32x4_t q_x) {
   // take the res
   const float32x4_t q_step_2 = vmulq_f32(q_step_1, q_step_result1);
   // mul by x to get sqrt, not rsqrt
-  return vmul_f32(q_x, q_step_2);
+  return vmulq_f32(q_x, q_step_2);
 }
 #endif
 

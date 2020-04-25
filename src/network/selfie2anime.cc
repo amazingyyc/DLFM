@@ -2,12 +2,13 @@
 #include "module/conv2d.h"
 #include "module/max_pooling2d.h"
 #include "module/relu.h"
+#include "module/tanh.h"
 #include "module/sequential.h"
 #include "module/sigmoid.h"
 #include "module/upsample2d.h"
-#include "network/unit.h"
+#include "network/selfie2anime.h"
 
-namespace dlfm::nn::unit {
+namespace dlfm::nn::selfie2anime {
 
 LayerNorm::LayerNorm(int64_t num_features, float eps, bool affine)
   : eps_(eps), affine_(affine), num_features_(num_features) {
@@ -38,7 +39,7 @@ Tensor LayerNorm::forward(Tensor x) {
   auto h = x.shape()[2];
   auto w = x.shape()[3];
 
-  auto mean = x.reshape({b, c * h * w}).mean(-1, true).reshape({ b, 1, 1, 1 });
+  auto mean = x.reshape({b, c * h * w}).mean(-1, true);
   auto std = x.reshape({ b, c * h * w }).std(-1, mean).reshape({ b, 1, 1, 1 });
 
   std += eps_;
@@ -67,22 +68,27 @@ Conv2dBlock::Conv2dBlock(int64_t input_dim, int64_t output_dim,
   }
 
   if ("in" == norm_type) {
-    ADD_SUB_MODULE(norm, instance_norm2d, output_dim);
-  } else if ("none" != norm_type) {
-    RUNTIME_ERROR("not supported norm_type:" << norm_type);
+    ADD_SUB_MODULE(norm, instance_norm2d, output_dim, 1e-05, false);
+  } else if ("ln" == norm_type) {
+    ADD_SUB_MODULE(norm, std::make_shared<LayerNorm>, output_dim);
+  } else {
+    ARGUMENT_CHECK("none" == norm_type, "not supported norm_type:" << norm_type);
   }
 
   if ("relu" == activation_type) {
     ADD_SUB_MODULE(activation, relu, true);
-  } else if ("none" != activation_type) {
-    RUNTIME_ERROR("not supported activation_type:" << activation_type);
+  } else if ("tanh" == activation_type) {
+    ADD_SUB_MODULE(activation, tanh, true);
+  } else {
+    ARGUMENT_CHECK("none" == activation_type, "not supported activation_type:" << activation_type);
   }
 
   ADD_SUB_MODULE(conv, conv2d, input_dim, output_dim, kernel_size, stride, 0);
 }
 
 Tensor Conv2dBlock::forward(Tensor x) {
-  auto y = (*conv)((*pad)(x));
+  auto y = (*pad)(x);
+  y = (*conv)(y);
 
   if (nullptr != norm) {
     y = (*norm)(y);
@@ -144,6 +150,8 @@ ContentEncoder::ContentEncoder(
   blocks.emplace_back(std::make_shared<ResBlocks>(n_res, dim, norm, activ, pad_type));
 
   ADD_SUB_MODULE(model, sequential, blocks);
+
+  output_dim = dim;
 }
 
 Tensor ContentEncoder::forward(Tensor x ) {
@@ -151,8 +159,14 @@ Tensor ContentEncoder::forward(Tensor x ) {
 }
 
 // Decoder
-Decoder::Decoder(int64_t n_upsample, int64_t n_res, int64_t dim, int64_t output_dim, 
-  std::string res_norm, std::string activ, std::string  pad_type) {
+Decoder::Decoder(
+  int64_t n_upsample,
+  int64_t n_res,
+  int64_t dim,
+  int64_t output_dim,
+  std::string res_norm,
+  std::string activ,
+  std::string  pad_type) {
   std::vector<Module> blocks;
 
   blocks.emplace_back(std::make_shared<ResBlocks>(n_res, dim, res_norm, activ, pad_type));
@@ -172,5 +186,61 @@ Decoder::Decoder(int64_t n_upsample, int64_t n_res, int64_t dim, int64_t output_
 Tensor Decoder::forward(Tensor x) {
   return (*model)(x);
 }
+
+VAEGen::VAEGen(
+    int64_t input_dim,
+    int64_t dim,
+    int64_t n_downsample,
+    int64_t n_res,
+    std::string activ,
+    std::string pad_type) {
+  ADD_SUB_MODULE(enc, std::make_shared<ContentEncoder>, n_downsample, n_res, input_dim, dim, "in", activ, pad_type);
+  ADD_SUB_MODULE(dec, std::make_shared<Decoder>, n_downsample, n_res, enc->output_dim, input_dim, "in", activ, pad_type);
+
+  mean = Tensor::create({3});
+  std = Tensor::create({3});
+
+  float *mean_ptr = mean.data<float>();
+  float *std_ptr = std.data<float>();
+
+  mean_ptr[0] = 0.5;
+  mean_ptr[1] = 0.5;
+  mean_ptr[2] = 0.5;
+
+  std_ptr[0] = 0.5;
+  std_ptr[1] = 0.5;
+  std_ptr[2] = 0.5;
+}
+
+Tensor VAEGen::forward(Tensor x) {
+  // x is [h, w, 3] uint8 image
+  ARGUMENT_CHECK(x.element_type().is<uint8_t>(), "VAEGen need uint8 input");
+  ARGUMENT_CHECK(3 == x.shape().ndims() && 3 == x.shape()[2], "VAEGen input shape error");
+  ARGUMENT_CHECK(x.shape()[0] >= 32 && x.shape()[1] >= 32,  "VAEGen input shape error");
+
+  // -> [3, h, w]
+  x = x.transpose({2, 0, 1});
+
+  // float [3, h, w]
+  x = x.cast(ElementType::from<float>());
+  x *= (1 / 255.0);
+
+  // normalize [-1, 1]
+  x = x.normalize(mean, std, true);
+
+  auto hidden = (*enc)(x.unsqueeze(0));
+
+  auto y = (*dec)(hidden);
+
+  // [3, h, w] (-1, 1)
+  y = y.squeeze(0);
+  y += 1.0;
+  y *= (255.0 / 2.0);
+
+  y = y.clamp(0, 255, true).cast(ElementType::from<uint8_t>());
+
+  return y.transpose({1, 2, 0});
+}
+
 
 }

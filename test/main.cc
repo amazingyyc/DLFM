@@ -2,6 +2,7 @@
 
 #include "test.h"
 #include "mean_test.h"
+#include "selfie2anime_test.h"
 
 using namespace dlfm::test;
 
@@ -22,7 +23,8 @@ int main() {
   // cartoon_transformer_test();
   // std_test();
   //style_transformer_test();
-  var_test();
+  // var_test();
+  selfie2anime_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

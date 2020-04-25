@@ -38,7 +38,6 @@ void instance_norm2d_f32_block_impl(
       sumv = vaddq_f32(sumv, vld1q_f32(xptr + c));
     }
 
-    //float32_t vgetq_lane_f32(float32x4_t vec, __constrange(0,3) int lane);
     mean += sumv[0] + sumv[1] + sumv[2] + sumv[3];
 #endif
 

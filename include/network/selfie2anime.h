@@ -1,5 +1,5 @@
-#ifndef NN_UNIT_H
-#define NN_UNIT_H
+#ifndef NN_SELFIE2ANIME_H
+#define NN_SELFIE2ANIME_H
 
 #include "common/tensor.h"
 #include "module/module.h"
@@ -8,7 +8,7 @@
 #include "module/instance_norm2d.h"
 #include "module/zero_pad2d.h"
 
-namespace dlfm::nn::unit {
+namespace dlfm::nn::selfie2anime {
 
 // LayerNorm
 class LayerNorm: public ModuleImpl {
@@ -83,6 +83,8 @@ class ContentEncoder: public ModuleImpl {
 public:
   Sequential model;
 
+  int64_t output_dim;
+
   ContentEncoder(
     int64_t n_downsample, 
     int64_t n_res, 
@@ -101,8 +103,35 @@ class Decoder: public ModuleImpl {
 public:
   Sequential model;
 
-  Decoder(int64_t n_upsample, int64_t n_res, int64_t dim, int64_t output_dim, 
-  std::string res_norm="adain", std::string activ="relu", std::string  pad_type="zero");
+  Decoder(
+    int64_t n_upsample, 
+    int64_t n_res, 
+    int64_t dim, 
+    int64_t output_dim, 
+    std::string res_norm="adain", 
+    std::string activ="relu", 
+    std::string  pad_type="zero");
+
+public:
+  Tensor forward(Tensor) override;
+};
+
+class VAEGen: public ModuleImpl {
+public:
+  // for nomalize
+  Tensor mean;
+  Tensor std;
+
+  std::shared_ptr<ContentEncoder> enc;
+  std::shared_ptr<Decoder> dec;
+
+  VAEGen(
+    int64_t input_dim,
+    int64_t dim,
+    int64_t n_downsample,
+    int64_t n_res,
+    std::string activ,
+    std::string pad_type);
 
 public:
   Tensor forward(Tensor) override;

@@ -12,7 +12,7 @@ void mean_f32_1d_horizontal_impl(float *x, float *y, int64_t n) {
 #if defined(__ARM_NEON__)
   float32x4_t sum_v = vdupq_n_f32(0);
 
-  for (; idx < limit; idx + 4) {
+  for (; idx < limit; idx += 4) {
     float32x4_t x_v = vld1q_f32(x + idx);
     sum_v = vaddq_f32(sum_v, x_v);
   }
