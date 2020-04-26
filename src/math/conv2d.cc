@@ -57,6 +57,7 @@ void conv2d_float_impl(
   if (input_height * input_width * output_channel >= 512 * 512 * 64) {
     convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
   }
+
   // use nnpack directly
   auto nnp_status = nnp_convolution_inference(
     convolution_algorithm,

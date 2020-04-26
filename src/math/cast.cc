@@ -4,11 +4,29 @@ namespace dlfm {
 namespace math {
 
 template <typename From, typename To>
-void cast_impl(Eigen::ThreadPoolDevice *eigen_device, From *x, To *y, int64_t n) {
-  Eigen::TensorMap<Eigen::Tensor<From, 1, Eigen::RowMajor>> xvec(x, n);
-  Eigen::TensorMap<Eigen::Tensor<To, 1, Eigen::RowMajor>> yvec(y, n);
+void cast_block_impl(From *x, To *y, int64_t n) {
+  for (int64_t i = 0; i < n; ++i) {
+    y[i] = static_cast<To>(x[i]);
+  }
+}
 
-  yvec.device(*eigen_device) = xvec.template cast<To>();
+template <typename From, typename To>
+void cast_impl(Eigen::ThreadPoolDevice *eigen_device, From *x, To *y, int64_t n) {
+  int64_t num_threads = (int64_t)eigen_device->numThreads();
+  int64_t block_size = (n + num_threads - 1) / num_threads;
+
+  num_threads = (n + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t start = i * block_size;
+    int64_t real_block_size = (std::min)(block_size, n - start);
+
+    eigen_device->enqueue_with_barrier(&barrier, &cast_block_impl<From, To>, x + start, y + start, real_block_size);
+  }
+
+  barrier.Wait();
 }
 
 void cast(const Tensor &x, Tensor &y) {

@@ -1,24 +1,8 @@
+#include "math/neon_mathfun.h"
 #include "math/sqrt.h"
 
 namespace dlfm {
 namespace math {
-
-#if defined(__ARM_NEON__)
-float32x4_t vsqrtq_f32(float32x4_t q_x) {
-  const float32x4_t q_step_0 = vrsqrteq_f32(q_x);
-  // step
-  const float32x4_t q_step_parm0 = vmulq_f32(q_x, q_step_0);
-  const float32x4_t q_step_result0 = vrsqrtsq_f32(q_step_parm0, q_step_0);
-  // step
-  const float32x4_t q_step_1 = vmulq_f32(q_step_0, q_step_result0);
-  const float32x4_t q_step_parm1 = vmulq_f32(q_x, q_step_1);
-  const float32x4_t q_step_result1 = vrsqrtsq_f32(q_step_parm1, q_step_1);
-  // take the res
-  const float32x4_t q_step_2 = vmulq_f32(q_step_1, q_step_result1);
-  // mul by x to get sqrt, not rsqrt
-  return vmulq_f32(q_x, q_step_2);
-}
-#endif
 
 void sqrt_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float *y, int64_t n) {
   auto block = [](float *x, float *y, int64_t n) {
@@ -27,7 +11,7 @@ void sqrt_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float *y, in
 
 #if defined(__ARM_NEON__)
     for (; idx < limit; idx += 4) {
-      float32x4_t yv = vsqrtq_f32(vld1q_f32(x + idx));
+      float32x4_t yv = sqrt_ps(vld1q_f32(x + idx));
 
       vst1q_f32(y + idx, yv);
     }
