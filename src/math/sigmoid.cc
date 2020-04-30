@@ -11,7 +11,7 @@ inline void sigmoid_f32_block_impl(float *x, float *y, int64_t n) {
   for (; i < limit; i += 4) {
     float32x4_t x_val = vld1q_f32(x + i);
 
-    vst1q_f32(y + i, sigmoid_ps(x_val));
+    vst1q_f32(y + i, neon::sigmoid_ps(x_val));
   }
 #endif
 

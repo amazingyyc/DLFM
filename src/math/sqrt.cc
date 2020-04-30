@@ -11,7 +11,7 @@ void sqrt_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float *y, in
 
 #if defined(__ARM_NEON__)
     for (; idx < limit; idx += 4) {
-      float32x4_t yv = sqrt_ps(vld1q_f32(x + idx));
+      float32x4_t yv = neon::sqrt_ps(vld1q_f32(x + idx));
 
       vst1q_f32(y + idx, yv);
     }
