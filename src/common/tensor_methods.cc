@@ -14,6 +14,9 @@
 #include "math/cat.h"
 #include "math/conv_transpose2d.h"
 #include "math/max_pooling2d.h"
+#include "math/avg_pooling2d.h"
+#include "math/adaptive_avg_pooling2d.h"
+#include "math/adaptive_max_pooling2d.h"
 #include "math/upsample2d.h"
 #include "math/matmul.h"
 #include "math/mean.h"
@@ -351,6 +354,29 @@ Tensor Tensor::reshape(const Shape &to_shape) {
   target.shape_ = to_shape;
 
   return target;
+}
+
+Tensor Tensor::view(std::vector<int64_t> dims) {
+  int64_t other_size = 1;
+  int64_t zero_axis = -1;
+
+  for (int64_t i = 0; i < dims.size(); ++i) {
+    if (dims[i] < 0 && zero_axis != -1) {
+      RUNTIME_ERROR("Tensor view need one axis is -1");
+    }
+
+    if (dims[i] < 0) {
+      zero_axis = i;
+    } else {
+      other_size *= dims[i];
+    }
+  }
+
+  if (zero_axis != -1) {
+    dims[zero_axis] = shape_.size() / other_size;
+  }
+
+  return this->reshape(dims);
 }
 
 Tensor Tensor::unsqueeze(size_t axis) {
@@ -856,6 +882,62 @@ Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t
   return output;
 }
 
+Tensor Tensor::avg_pooling2d(size_t kernel_size, size_t stride, size_t padding, bool ceil_mode) {
+  return this->avg_pooling2d({kernel_size, kernel_size}, {stride, stride}, {padding, padding}, ceil_mode);
+}
+
+Tensor Tensor::avg_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {
+  ARGUMENT_CHECK(4 == shape_.ndims(), "avg_pooling 4d tensor");
+  ARGUMENT_CHECK(element_type_.is<float>(), "avg pooling need float");
+
+  int64_t batch_size   = shape_[0];
+  int64_t channel      = shape_[1];
+  int64_t input_height = shape_[2];
+  int64_t input_width  = shape_[3];
+
+  int64_t output_height = (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1;
+  int64_t output_width  = (input_width  + 2 * padding[1] - kernel_size[1]) / stride[1] + 1;
+
+  if (ceil_mode) {
+    output_height = (int64_t)ceil(1.0 * (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1.0);
+    output_width  = (int64_t)ceil(1.0 * (input_width  + 2 * padding[1] - kernel_size[1]) / stride[1] + 1.0);
+  }
+
+  auto output = Tensor::create({ batch_size, channel, output_height, output_width }, element_type_);
+
+  math::avg_pooling2d(*this, output, kernel_size, stride, padding);
+
+  return output;
+}
+
+Tensor Tensor::adaptive_avg_pooling2d(size_t size) {
+  return adaptive_avg_pooling2d({size, size});
+}
+
+Tensor Tensor::adaptive_avg_pooling2d(std::vector<size_t> size) {
+  ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_avg_pooling2d need ndims is 4");
+
+  auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
+  
+  math::adaptive_avg_pooling2d(*this, target);
+
+  return target;
+}
+
+Tensor Tensor::adaptive_max_pooling2d(size_t size) {
+  return adaptive_max_pooling2d({size, size});
+}
+
+Tensor Tensor::adaptive_max_pooling2d(std::vector<size_t> size) {
+  ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_max_pooling2d need ndims is 4");
+
+  auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
+  
+  math::adaptive_max_pooling2d(*this, target);
+
+  return target;
+}
+
 Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corners) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "upsample2d need rank is 4");
 
@@ -1027,6 +1109,39 @@ std::ostream& operator<<(std::ostream& os, const Tensor &t) {
   }
 
   return os;
+}
+
+// operator override
+Tensor operator+(float value, const Tensor &x) {
+  auto target = Tensor::create(x.shape(), x.element_type());
+
+  math::add(value, x, target);
+
+  return target;
+}
+
+Tensor operator-(float value, const Tensor &x) {
+  auto target = Tensor::create(x.shape(), x.element_type());
+
+  math::sub(value, x, target);
+
+  return target;
+}
+
+Tensor operator*(float value, const Tensor &x) {
+  auto target = Tensor::create(x.shape(), x.element_type());
+
+  math::multiply(value, x, target);
+
+  return target;
+}
+
+Tensor operator/(float value, const Tensor &x) {
+  auto target = Tensor::create(x.shape(), x.element_type());
+
+  math::divide(value, x, target);
+
+  return target;
 }
 
 }

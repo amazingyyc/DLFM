@@ -8,19 +8,22 @@ namespace dlfm::nn {
 
 class Conv2dImpl: public ModuleImpl {
 public:
-  Tensor weight_;
-  Tensor bias_;
+  Tensor weight;
+  Tensor bias;
 
-  std::vector<size_t> kernel_size_;
-  std::vector<size_t> stride_;
-  std::vector<size_t> padding_;
+  bool has_bias;
+
+  std::vector<size_t> kernel_size;
+  std::vector<size_t> stride;
+  std::vector<size_t> padding;
 
   Conv2dImpl(
       int64_t in_channel,
       int64_t out_channel,
       std::vector<size_t> kernel_size,
       std::vector<size_t> stride,
-      std::vector<size_t> padding);
+      std::vector<size_t> padding,
+      bool has_bias);
 
 public:
   void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
@@ -36,14 +39,16 @@ Conv2d conv2d(
         int64_t out_channel,
         std::vector<size_t> kernel_size,
         std::vector<size_t> stride,
-        std::vector<size_t> padding);
+        std::vector<size_t> padding,
+        bool has_bias=true);
 
 Conv2d conv2d(
   int64_t in_channel,
   int64_t out_channel,
   size_t kernel_size,
   size_t stride = 1,
-  size_t padding = 0);
+  size_t padding = 0,
+  bool has_bias = true);
 
 }
 

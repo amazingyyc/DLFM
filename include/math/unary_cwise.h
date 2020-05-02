@@ -15,6 +15,14 @@ void multiply(const Tensor&, float, Tensor&);
 
 void divide(const Tensor&, float, Tensor&);
 
+void add(float, const Tensor&, Tensor&);
+
+void sub(float, const Tensor&, Tensor&);
+
+void multiply(float, const Tensor&, Tensor&);
+
+void divide(float, const Tensor&, Tensor&);
+
 }
 
 #endif

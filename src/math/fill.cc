@@ -33,7 +33,7 @@ void fill_impl(Eigen::ThreadPoolDevice *eigen_device, T *p, T value, int64_t n) 
     int64_t start = i * block_size;
     int64_t real_block_size = (std::min)(block_size, n - start);
 
-    eigen_device->enqueue_with_barrier(&barrier, &fill_block_impl, p + start, value, real_block_size);
+    eigen_device->enqueue_with_barrier(&barrier, &fill_block_impl<T>, p + start, value, real_block_size);
   }
 
   barrier.Wait();

@@ -112,6 +112,8 @@ class Tensor {
 
   Tensor reshape(const Shape&);
 
+  Tensor view(std::vector<int64_t>);
+
   Tensor unsqueeze(size_t axis);
   Tensor squeeze(size_t axis);
 
@@ -172,6 +174,16 @@ class Tensor {
   // kernel, stride, padding size both 2
   // corresponding pytorch
   Tensor max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
+
+  // kernel, stride, padding size both 2
+  Tensor avg_pooling2d(size_t kernel_size, size_t stride, size_t padding = 0, bool ceil_mode = false);
+  Tensor avg_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
+
+  Tensor adaptive_avg_pooling2d(size_t size);
+  Tensor adaptive_avg_pooling2d(std::vector<size_t> size);
+
+  Tensor adaptive_max_pooling2d(size_t size);
+  Tensor adaptive_max_pooling2d(std::vector<size_t> size);
 
   Tensor upsample2d(float scale_factor, std::string mode="nearest", bool align_corners = false);
 
@@ -241,6 +253,13 @@ class Tensor {
 
 // operator override
 std::ostream& operator<<(std::ostream& os, const Tensor &t);
+
+// operator override
+Tensor operator+(float, const Tensor&);
+Tensor operator-(float, const Tensor&);
+Tensor operator*(float, const Tensor&);
+Tensor operator/(float, const Tensor&);
+
 
 }  // namespace dlfm
 

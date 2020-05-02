@@ -2,6 +2,7 @@
 #include "test.h"
 #include "network/tiny_unet.h"
 #include "network/style_transformer.h"
+#include "network/cartoon_face.h"
 
 namespace dlfm {
 namespace test {
@@ -29,6 +30,14 @@ void style_transformer_test() {
   auto output = style_transformer(input);
 
   //std::cout << output << "\n";
+}
+
+void cartoon_face_test() {
+  nn::cartoon_face::CartoonFace cartoon(32, 256, true);
+  cartoon.torch_name_scope("cartoon_face");
+  cartoon.load_torch_model("/Users/yanyuanchi/code/photo2cartoon/dlfm");
+
+  std::cout << "finish\n";
 }
 
 }

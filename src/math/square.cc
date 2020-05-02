@@ -32,7 +32,7 @@ void square_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float *y, 
     int64_t start = i * block_size;
     int64_t real_block_size = (std::min)(block_size, n - start);
 
-    eigen_device->enqueue_with_barrier(&barrier, &square_f32_block_impl, x, y, real_block_size);
+    eigen_device->enqueue_with_barrier(&barrier, &square_f32_block_impl, x + start, y + start, real_block_size);
   }
 
   barrier.Wait();

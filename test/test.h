@@ -10,6 +10,8 @@ void cartoon_transformer_test();
 
 void style_transformer_test();
 
+void cartoon_face_test();
+
 }
 }
 
