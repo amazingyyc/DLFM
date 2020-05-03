@@ -106,6 +106,8 @@ class Tensor {
   Tensor operator*(float);
   Tensor operator/(float);
 
+  Tensor operator[](int64_t idx);
+
   Tensor reshape(const std::vector<int64_t>&);
 
   Tensor reshape(const std::vector<int64_t>&) const;

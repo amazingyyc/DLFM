@@ -37,7 +37,11 @@ void cartoon_face_test() {
   cartoon.torch_name_scope("cartoon_face");
   cartoon.load_torch_model("/Users/yanyuanchi/code/photo2cartoon/dlfm");
 
-  std::cout << "finish\n";
+  auto input = Tensor::ones({1, 3, 256, 256});
+
+  auto output = cartoon(input);
+
+  std::cout << output[0][0] << "\n";
 }
 
 }

@@ -325,6 +325,15 @@ Tensor Tensor::operator/(float value) {
   return target;
 }
 
+Tensor Tensor::operator[](int64_t idx) {
+  ARGUMENT_CHECK(idx >= 0 && idx < shape_[0], "idx out of range");
+
+  auto dims = this->shape_.dim_vector();
+  dims.erase(dims.begin());
+
+  return Tensor(storage_, idx * shape_.stride(0) * element_type_.byte_width(), Shape(dims), element_type_);
+}
+
 Tensor Tensor::reshape(const std::vector<int64_t> &dims) {
   Shape to_shape(dims);
 

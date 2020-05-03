@@ -421,6 +421,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
 Tensor CartoonFace::forward(Tensor x) {
   x = (*ConvBlock1)(x);
+
   x = (*HourGlass1)(x);
   x = (*HourGlass2)(x);
 

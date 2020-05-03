@@ -28,6 +28,7 @@ void instance_norm2d_f32_block_impl(
   float* yptr = y + idx * col;
 
   {
+    double sum = 0;
     int64_t c = 0;
 
 #if defined(__ARM_NEON__)
@@ -38,17 +39,18 @@ void instance_norm2d_f32_block_impl(
       sumv = vaddq_f32(sumv, vld1q_f32(xptr + c));
     }
 
-    mean += sumv[0] + sumv[1] + sumv[2] + sumv[3];
+    sum += sumv[0] + sumv[1] + sumv[2] + sumv[3];
 #endif
 
     for (; c < col; ++c) {
-      mean += xptr[c];
+      sum += (double)(xptr[c]);
     }
 
-    mean /= float(col);
+    mean = (float)(sum / double(col));
   }
 
   {
+    double sum = 0;
     int64_t c = 0;
 
 #if defined(__ARM_NEON__)
@@ -62,15 +64,15 @@ void instance_norm2d_f32_block_impl(
       sumv = vaddq_f32(sumv, vmulq_f32(diff, diff));
     }
 
-    variance += sumv[0] + sumv[1] + sumv[2] + sumv[3];
+    sum += sumv[0] + sumv[1] + sumv[2] + sumv[3];
 #endif
 
     for (; c < col; ++c) {
-      float diff = xptr[c] - mean;
-      variance += diff * diff;
+      double diff = xptr[c] - mean;
+      sum += diff * diff;
     }
 
-    variance /= float(col);
+    variance = (float)(sum / double(col));
   }
 
   float variance_rsqrt = 1.0 / std::sqrt(variance + eps);

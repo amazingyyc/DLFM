@@ -12,10 +12,6 @@ Conv2dImpl::Conv2dImpl(
   :kernel_size(std::move(std::move(k))), stride(std::move(s)), padding(std::move(p)), has_bias(has) {
   weight = Tensor::create({ out_channel, in_channel , (int64_t)kernel_size[0], (int64_t)kernel_size[1] });
   bias = Tensor::create({ out_channel });
-
-  if (!has_bias) {
-    bias.fill(0);
-  }
 }
 
 void Conv2dImpl::load_torch_model(std::string model_folder, std::string parent_name_scope) {
@@ -29,6 +25,8 @@ void Conv2dImpl::load_torch_model(std::string model_folder, std::string parent_n
 
   if (has_bias) {
     bias.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "bias" + TORCH_MODEL_FILE_SUFFIX);
+  } else {
+    bias.fill(0);
   }
 }
 
