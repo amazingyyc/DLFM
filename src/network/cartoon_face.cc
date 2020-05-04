@@ -420,6 +420,19 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 }
 
 Tensor CartoonFace::forward(Tensor x) {
+  // x must be uint8 dimension is [256, 256, 3]
+  ARGUMENT_CHECK(3 == x.ndims() && x.element_type().is<uint8_t>(), "CartoonFace input error");
+  ARGUMENT_CHECK(256 == x.shape()[0] && 256 == x.shape()[1] && 3 == x.shape()[2], "CartoonFace need dimension is [256, 256, 3]");
+
+  // -> [3, h, w]
+  x = x.transpose({2, 0, 1});
+
+  // float [3, h, w]
+  x = x.cast(ElementType::from<float>());
+  x /= 127.5;
+  x -= 1.0;
+  x = x.unsqueeze(0);
+
   x = (*ConvBlock1)(x);
 
   x = (*HourGlass1)(x);
@@ -476,7 +489,14 @@ Tensor CartoonFace::forward(Tensor x) {
   x = (*HourGlass4)(x);
   auto out = (*ConvBlock2)(x);
 
-  return out;
+  // convert to rgb
+  // [3, h, w]
+  out = out.squeeze(0);
+  out += 1.0;
+  out *= 127.5;
+  out = out.clamp(0, 255, true).cast(ElementType::from<uint8_t>());
+
+  return out.transpose({1, 2, 0});
 }
 
 }
