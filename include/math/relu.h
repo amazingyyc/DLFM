@@ -7,6 +7,8 @@ namespace dlfm::math {
 
 void relu(const Tensor &x, Tensor &y);
 
+void relu6(const Tensor &x, Tensor &y);
+
 }
 
 #endif

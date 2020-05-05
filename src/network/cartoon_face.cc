@@ -18,27 +18,27 @@ ConvBlock::ConvBlock(int64_t in, int64_t out) {
     instance_norm2d(in, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(in, out / 2, 3, 1, 0, false)
+    conv2d(in, out / 2, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock2, sequential, {
     instance_norm2d(out / 2, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(out / 2, out / 4, 3, 1, 0, false)
+    conv2d(out / 2, out / 4, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock3, sequential, {
     instance_norm2d(out / 4, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(out / 4, out / 4, 3, 1, 0, false)
+    conv2d(out / 4, out / 4, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock4, sequential, {
     instance_norm2d(in, 1e-05, false),
     relu(true),
-    conv2d(in, out, 1, 1, 0, false)
+    conv2d(in, out, 1, 1, 0, 1, false)
   });
 }
 
@@ -117,11 +117,11 @@ Tensor HourGlassBlock::forward(Tensor x) {
 ResnetBlock::ResnetBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(conv_block, sequential, {
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
     instance_norm2d(dim, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
     instance_norm2d(dim, 1e-05, false)
   });
 }
@@ -136,7 +136,7 @@ HourGlass::HourGlass(int64_t dim_in, int64_t dim_out, bool res) {
   ADD_SUB_MODULE(HG, sequential, {
     std::make_shared<HourGlassBlock>(dim_in, dim_out),
     std::make_shared<ConvBlock>(dim_out, dim_out),
-    conv2d(dim_out, dim_out, 1, 1, 0, false),
+    conv2d(dim_out, dim_out, 1, 1, 0, 1, false),
     instance_norm2d(dim_out, 1e-05, false),
     relu(true)
   });
@@ -263,12 +263,12 @@ Tensor SoftAdaLIN::forward(std::vector<Tensor> input) {
 
 ResnetSoftAdaLINBlock::ResnetSoftAdaLINBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(pad1, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, use_bias);
+  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
   ADD_SUB_MODULE(norm1, std::make_shared<SoftAdaLIN>, dim);
   ADD_SUB_MODULE(relu1, relu, true);
 
   ADD_SUB_MODULE(pad2, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, use_bias);
+  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
   ADD_SUB_MODULE(norm2, std::make_shared<SoftAdaLIN>, dim);
 }
 
@@ -340,7 +340,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(ConvBlock1, sequential, {
     reflection_pad2d(3),
-    conv2d(3, ngf, 7, 1, 0, false),
+    conv2d(3, ngf, 7, 1, 0, 1, false),
     instance_norm2d(ngf, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
@@ -350,14 +350,14 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(DownBlock1, sequential, {
     reflection_pad2d(1),
-    conv2d(ngf, ngf * 2, 3, 2, 0, false),
+    conv2d(ngf, ngf * 2, 3, 2, 0, 1, false),
     instance_norm2d(ngf * 2, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
 
   ADD_SUB_MODULE(DownBlock2, sequential, {
     reflection_pad2d(1),
-    conv2d(ngf * 2, ngf * 4, 3, 2, 0, false),
+    conv2d(ngf * 2, ngf * 4, 3, 2, 0, 1, false),
     instance_norm2d(ngf * 4, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
@@ -396,7 +396,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
   ADD_SUB_MODULE(UpBlock1, sequential, {
     upsample2d(2),
     reflection_pad2d(1),
-    conv2d(ngf * 4, ngf * 2, 3, 1, 0, false),
+    conv2d(ngf * 4, ngf * 2, 3, 1, 0, 1, false),
     std::make_shared<LIN>(ngf * 2),
     std::make_shared<ReluImpl>(true)
   });
@@ -404,7 +404,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
   ADD_SUB_MODULE(UpBlock2, sequential, {
     upsample2d(2),
     reflection_pad2d(1),
-    conv2d(ngf * 2, ngf, 3, 1, 0, false),
+    conv2d(ngf * 2, ngf, 3, 1, 0, 1, false),
     std::make_shared<LIN>(ngf),
     std::make_shared<ReluImpl>(true)
   });
@@ -414,7 +414,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(ConvBlock2, sequential, {
     reflection_pad2d(3),
-    conv2d(3, 3, 7, 1, 0, false),
+    conv2d(3, 3, 7, 1, 0, 1, false),
     tanh(true)
   });
 }

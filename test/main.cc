@@ -25,7 +25,8 @@ int main() {
   //style_transformer_test();
   // var_test();
   //selfie2anime_test();
-  cartoon_face_test();
+  //cartoon_face_test();
+  human_seg_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

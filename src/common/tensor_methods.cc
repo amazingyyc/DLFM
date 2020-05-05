@@ -26,8 +26,10 @@
 #include "math/reflection_pad2d.h"
 #include "math/clamp.h"
 #include "math/instance_norm2d.h"
+#include "math/batch_norm2d.h"
 #include "math/conv2d.h"
 #include "math/var.h"
+#include "math/softmax.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -331,7 +333,7 @@ Tensor Tensor::operator[](int64_t idx) {
   auto dims = this->shape_.dim_vector();
   dims.erase(dims.begin());
 
-  return Tensor(storage_, idx * shape_.stride(0) * element_type_.byte_width(), Shape(dims), element_type_);
+  return Tensor(storage_, this->offset_ + idx * shape_.stride(0) * element_type_.byte_width(), Shape(dims), element_type_);
 }
 
 Tensor Tensor::reshape(const std::vector<int64_t> &dims) {
@@ -604,6 +606,22 @@ Tensor Tensor::std(int64_t axis, bool keep_dims, bool unbiased) {
   return this->var(axis, keep_dims, unbiased).sqrt(true);
 }
 
+Tensor Tensor::softmax(int64_t axis) {
+  auto ndims = this->ndims();
+
+  if (axis < 0) {
+    axis += this->ndims();
+  }
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+
+  auto target = this->like();
+
+  math::softmax(*this, target, axis);
+
+  return target;
+}
+
 Tensor Tensor::clamp(float min, float max, bool in_place) {
   if (in_place) {
     math::clamp(*this, *this, min, max);
@@ -634,6 +652,20 @@ Tensor Tensor::relu(bool in_place) {
     auto target = this->like();
 
     math::relu(*this, target);
+
+    return target;
+  }
+}
+
+Tensor Tensor::relu6(bool in_place) {
+  if (in_place) {
+    math::relu6(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::relu6(*this, target);
 
     return target;
   }
@@ -976,6 +1008,33 @@ Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corne
   return output;
 }
 
+Tensor Tensor::interpolate2d(std::vector<int64_t> size, std::string mode, bool align_corners) {
+  ARGUMENT_CHECK(4 == this->shape_.rank(), "interpolate2d need rank is 4");
+  ARGUMENT_CHECK(size[0] > 0 && size[1] > 1, "size need > 0");
+
+  if ("nearest" == mode) {
+    ARGUMENT_CHECK(false == align_corners, "nearest mode only support align_corners is false")
+  }
+
+  std::vector<int64_t> output_dims = {shape_[0], shape_[1], size[0], size[1]};
+
+  if (size[0] == shape_[2] && size[1] == shape_[3]) {
+    return this->clone();
+  }
+
+  auto output = Tensor::create(output_dims, element_type_);
+
+  if ("nearest" == mode) {
+    math::upsample_nearest2d(*this, output);
+  } else if ("bilinear" == mode) {
+    math::upsample_bilinear2d(*this, output, align_corners);
+  } else {
+    RUNTIME_ERROR("not support mode");
+  }
+
+  return output;
+}
+
 Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
   ARGUMENT_CHECK(2 == this->shape_.rank() && 2 == y.shape().rank(), "matmul only support rank is 2");
   ARGUMENT_CHECK(element_type_ == y.element_type(), "matmul need element type same");
@@ -1018,18 +1077,18 @@ Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
 }
 
 // conv2d
-Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups) {
+Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups) {
   ARGUMENT_CHECK(groups >= 1, "groups must >= 1");
-  ARGUMENT_CHECK(4 == shape_.ndims() && 1 == shape_[0], "conv2d need shape ndims is 4 (batch must be 1)");
-  ARGUMENT_CHECK(0 == shape_[1] % groups, "input channel sould be divided by groups");
+  ARGUMENT_CHECK(4 == shape_.ndims(), "conv2d need shape ndims is 4");
+  ARGUMENT_CHECK(0 == shape_[1] % groups, "input channel should be divided by groups");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "weight ndims must be 4");
   ARGUMENT_CHECK(0 == weight.shape_[0] % groups, "weight shape error");
   ARGUMENT_CHECK(shape_[1] / groups == weight.shape_[1], "weight shape error");
-  ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "biase shape error");
+  ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "bias shape error");
 
-  int64_t input_channel = shape_[-3];
-  int64_t input_height  = shape_[-2];
-  int64_t input_width   = shape_[-1];
+  int64_t batch = shape_[0];
+  int64_t input_height  = shape_[2];
+  int64_t input_width   = shape_[3];
 
   // weight [output_channel, input_channel, kernel_height, kernel_width]
   int64_t output_channel = weight.shape_[0];
@@ -1039,7 +1098,7 @@ Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size
   int64_t output_height = (input_height + 2 * padding[0] - kernel_height) / stride[0] + 1;
   int64_t output_width  = (input_width  + 2 * padding[1] - kernel_width)  / stride[1] + 1;
 
-  auto output = Tensor::create({ 1, output_channel, output_height, output_width }, element_type_);
+  auto output = Tensor::create({ batch, output_channel, output_height, output_width }, element_type_);
 
   math::conv2d(*this, weight, bias, output, stride, padding, groups);
 
@@ -1104,6 +1163,18 @@ Tensor Tensor::instance_norm2d(const Tensor &scale, const Tensor &shift, float e
   auto output = this->like();
 
   math::instance_norm2d(*this, scale, shift, eps, output);
+
+  return output;
+}
+
+Tensor Tensor::batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps) {
+  ARGUMENT_CHECK(4 == this->shape_.rank(), "instance_norm2d need rank is 4");
+  ARGUMENT_CHECK(1 == scale.rank() && 1 == shift.rank(), "instance_norm2d need scale/shift rank is 1");
+  ARGUMENT_CHECK(shape_[1] == mean.shape()[0] && shape_[1] == var.shape()[0] && shape_[1] == scale.shape()[0] && shape_[1] == shift.shape()[0], "shape error");
+
+  auto output = this->like();
+
+  math::batch_norm2d(*this, mean, var, scale, shift, eps, output);
 
   return output;
 }

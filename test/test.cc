@@ -3,6 +3,7 @@
 #include "network/tiny_unet.h"
 #include "network/style_transformer.h"
 #include "network/cartoon_face.h"
+#include "network/human_seg.h"
 
 namespace dlfm {
 namespace test {
@@ -29,7 +30,7 @@ void style_transformer_test() {
 
   auto output = style_transformer(input);
 
-  //std::cout << output << "\n";
+  std::cout << output << "\n";
 }
 
 void cartoon_face_test() {
@@ -42,6 +43,23 @@ void cartoon_face_test() {
   auto output = cartoon(input);
 
   std::cout << output[0][0] << "\n";
+}
+
+void human_seg_test() {
+  nn::human_seg::HumanSeg seg;
+  seg.torch_name_scope("human_seg");
+  seg.load_torch_model("/Users/yanyuanchi/code/Human-Segmentation-PyTorch/pretrain_model/dlfm");
+
+  auto input = Tensor::ones({1, 3, 256, 256});
+
+  auto output = seg(input);
+
+  // [1, 2, 256, 256]
+  // std::cout << output.slice({0, 1, 0, 0}, {1, 1, 1, 256}) << "\n";
+  auto tt = output[0];
+  tt = tt[1];
+  tt = tt[0];
+  std::cout << tt << "\n";
 }
 
 }

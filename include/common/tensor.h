@@ -136,12 +136,16 @@ class Tensor {
   Tensor std(int64_t axis, const Tensor &mean, bool unbiased = true);
   Tensor std(int64_t axis, bool keep_dims = false, bool unbiased = true);
 
+  Tensor softmax(int64_t axis);
+
   Tensor clamp(float min, float max, bool in_place=false);
 
   // set all element of this tensor to be value.
   Tensor fill(float);
 
   Tensor relu(bool);
+
+  Tensor relu6(bool);
 
   Tensor sigmoid(bool);
 
@@ -189,16 +193,20 @@ class Tensor {
 
   Tensor upsample2d(float scale_factor, std::string mode="nearest", bool align_corners = false);
 
+  Tensor interpolate2d(std::vector<int64_t> output_size, std::string mode="nearest", bool align_corners = false);
+
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
-  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups = 1);
+  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups = 1);
 
   // transpose conv2d
   Tensor conv_transpose2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, std::vector<size_t> out_padding);
 
   Tensor instance_norm2d(float eps = 1e-05);
   Tensor instance_norm2d(const Tensor &scale, const Tensor &shift, float eps = 1e-05);
+
+  Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
 
   //-----------------------------------------------------------------------------------------------------------------------------------------
   template <typename T>
