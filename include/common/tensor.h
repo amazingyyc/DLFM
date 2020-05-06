@@ -195,6 +195,8 @@ class Tensor {
 
   Tensor interpolate2d(std::vector<int64_t> output_size, std::string mode="nearest", bool align_corners = false);
 
+  Tensor pixel_shuffle(int64_t upscale_factor);
+
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d

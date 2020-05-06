@@ -62,6 +62,9 @@ public:
 
 class HumanSeg: public ModuleImpl {
 public:
+  Tensor mean;
+  Tensor std;
+
   std::shared_ptr<MobileNetV2> backbone;
 
   std::shared_ptr<DecoderBlock> decoder1;

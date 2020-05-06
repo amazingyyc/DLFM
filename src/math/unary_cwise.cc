@@ -82,7 +82,7 @@ void sub(float value, const Tensor &x, Tensor &y) {
 
 #if defined(__ARM_NEON__)
     float32x4_t value_v = vdupq_n_f32(value);
-    
+
     for (; idx < limit; idx += 4) {
       float32x4_t xv = vld1q_f32(x + idx);
       vst1q_f32(y + idx, vsubq_f32(value_v, xv));
@@ -127,7 +127,7 @@ void divide(float value, const Tensor &x, Tensor &y) {
 
 #if defined(__ARM_NEON__)
     float32x4_t value_v = vdupq_n_f32(value);
-    
+
     for (; idx < limit; idx += 4) {
       float32x4_t xv = vld1q_f32(x + idx);
       vst1q_f32(y + idx, vdivq_f32(value_v, xv));

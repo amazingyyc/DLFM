@@ -148,10 +148,7 @@ Tensor MobileNetV2::forward(Tensor x) {
 
 DecoderBlock::DecoderBlock(int64_t in_channels, int64_t out_channels, std::shared_ptr<InvertedResidual> block) {
   ADD_SUB_MODULE(deconv, conv_tranpose2d, in_channels, out_channels, 4, 2, 1);
-
-  block_unit = std::move(block);
-  sub_modules_.emplace_back(block_unit);
-  block_unit->torch_name_scope("block_unit");
+  ADD_SUB_MODULE(block_unit, std::move, block);
 }
 
 Tensor DecoderBlock::forward(std::vector<Tensor> inputs) {
@@ -195,6 +192,20 @@ HumanSeg::HumanSeg(int64_t num_classes) {
     conv2d(channel4, 3, 3, 1, 1),
     conv2d(3, num_classes, 3, 1, 1),
   });
+
+  mean = Tensor::create({ 3 });
+  std = Tensor::create({ 3 });
+
+  float *mean_ptr = mean.data<float>();
+  float *std_ptr = std.data<float>();
+
+  mean_ptr[0] = 0.485;
+  mean_ptr[1] = 0.456;
+  mean_ptr[2] = 0.406;
+
+  std_ptr[0] = 0.229;
+  std_ptr[1] = 0.224;
+  std_ptr[2] = 0.225;
 }
 
 Tensor HumanSeg::forward(Tensor input) {
@@ -202,9 +213,20 @@ Tensor HumanSeg::forward(Tensor input) {
   ARGUMENT_CHECK(3 == input.ndims() && input.element_type().is<uint8_t>(), "HumanSeg input error");
   ARGUMENT_CHECK(256 == input.shape()[0] && 256 == input.shape()[1] && 3 == input.shape()[2], "HumanSeg need dimension is [256, 256, 3]");
 
+  // -> [3, 256, 256]
+  input = input.transpose({ 2, 0, 1 });
+
+  // cast to float.
+  input = input.cast(ElementType::from<float>());
+  input *= (1 / 255.0);
+
+  // normalize
+  input = input.normalize(mean, std, true);
+
   auto mobilenetv2 = backbone->features->sub_modules();
 
-  auto x = input;
+  // [1, 3, 256, 256]
+  auto x = input.unsqueeze(0);
 
   for (int i = 0; i < 2; ++i) {
     x = (*(mobilenetv2[i]))(x);
@@ -242,7 +264,14 @@ Tensor HumanSeg::forward(Tensor input) {
   x = (*decoder4)({x, x1});
   x = (*conv_last)(x);
 
-  return x.interpolate2d({input.shape()[2], input.shape()[3]}, "bilinear", true);
+  // [1, 2, 256, 256]
+  x = x.interpolate2d({ input.shape()[2], input.shape()[3] }, "bilinear", true);
+  x = x.reshape({2, 256, 256});
+
+  // [2, 256, 256]
+  x = x.softmax(0);
+
+  return x;
 }
 
 }

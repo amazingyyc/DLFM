@@ -3,7 +3,7 @@
 namespace dlfm {
 namespace math {
 
-float cal_origin_index(int64_t origin_size, int64_t up_size, int64_t up_idx, bool align_corners) {
+inline float cal_origin_index(int64_t origin_size, int64_t up_size, int64_t up_idx, bool align_corners) {
   if (align_corners) {
     return 1.0 * up_idx * (origin_size - 1) / (up_size - 1);
   } else {

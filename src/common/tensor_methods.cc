@@ -1035,6 +1035,25 @@ Tensor Tensor::interpolate2d(std::vector<int64_t> size, std::string mode, bool a
   return output;
 }
 
+Tensor Tensor::pixel_shuffle(int64_t upscale_factor) {
+  ARGUMENT_CHECK(upscale_factor > 0 && 4 == this->shape_.ndims(), "pixel_shuffle need ndims is 4");
+
+  auto b = this->shape()[0];
+  auto c = this->shape()[1];
+  auto h = this->shape()[2];
+  auto w = this->shape()[3];
+
+  int64_t upscale_factor_squared = upscale_factor * upscale_factor;
+
+  ARGUMENT_CHECK(0 == c % upscale_factor_squared, "pixel_shuffle expects input channel to be divisible by square of upscale_factor*upscale_factor");
+
+  int64_t oc = c / upscale_factor_squared;
+  int64_t oh = h * upscale_factor;
+  int64_t ow = w * upscale_factor;
+
+  return this->reshape({ b * oc, upscale_factor, upscale_factor , h, w }).transpose({0, 3, 1, 4, 2}).reshape({b, oc, oh, ow });
+}
+
 Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
   ARGUMENT_CHECK(2 == this->shape_.rank() && 2 == y.shape().rank(), "matmul only support rank is 2");
   ARGUMENT_CHECK(element_type_ == y.element_type(), "matmul need element type same");
