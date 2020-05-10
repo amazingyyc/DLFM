@@ -147,6 +147,8 @@ class Tensor {
 
   Tensor relu6(bool);
 
+  Tensor prelu(const Tensor &w, bool);
+
   Tensor sigmoid(bool);
 
   Tensor tanh(bool);
@@ -209,6 +211,9 @@ class Tensor {
   Tensor instance_norm2d(const Tensor &scale, const Tensor &shift, float eps = 1e-05);
 
   Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
+
+  // special for img
+  Tensor img_mask(const Tensor &mask, const Tensor &val);
 
   //-----------------------------------------------------------------------------------------------------------------------------------------
   template <typename T>

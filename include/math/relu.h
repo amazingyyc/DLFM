@@ -9,6 +9,8 @@ void relu(const Tensor &x, Tensor &y);
 
 void relu6(const Tensor &x, Tensor &y);
 
+void prelu(const Tensor &x, const Tensor &w, Tensor &y);
+
 }
 
 #endif

@@ -81,17 +81,17 @@ Tensor HourGlassBlock::forward(Tensor x) {
   auto down1 = skip1.avg_pooling2d(2, 2);
   down1 = (*ConvBlock1_2)(down1);
 
-  auto skip2 = (*ConvBlock1_1)(down1);
+  auto skip2 = (*ConvBlock2_1)(down1);
   auto down2 = down1.avg_pooling2d(2, 2);
-  down2 = (*ConvBlock1_2)(down2);
+  down2 = (*ConvBlock2_2)(down2);
 
-  auto skip3 = (*ConvBlock1_1)(down2);
+  auto skip3 = (*ConvBlock3_1)(down2);
   auto down3 = down2.avg_pooling2d(2, 2);
-  down3 = (*ConvBlock1_2)(down3);
+  down3 = (*ConvBlock3_2)(down3);
 
-  auto skip4 = (*ConvBlock1_1)(down3);
+  auto skip4 = (*ConvBlock4_1)(down3);
   auto down4 = down3.avg_pooling2d(2, 2);
-  down4 = (*ConvBlock1_2)(down4);
+  down4 = (*ConvBlock4_2)(down4);
 
   auto center = (*ConvBlock5)(down4);
 
@@ -157,7 +157,10 @@ Tensor HourGlass::forward(Tensor x) {
     ll = (*Conv2)(ll);
     tmp_out = (*Conv3)(tmp_out);
 
-    return x + ll + tmp_out;
+    tmp_out += x;
+    tmp_out += ll;
+
+    return tmp_out;
   }
 
   return tmp_out;
@@ -285,7 +288,7 @@ Tensor ResnetSoftAdaLINBlock::forward(std::vector<Tensor> input) {
   out = (*pad2)(out);
   out = (*conv2)(out);
   out = (*norm2)({out, content_features, style_features});
-  
+
   return out + x;
 }
 
@@ -449,7 +452,7 @@ Tensor CartoonFace::forward(Tensor x) {
 
   x = (*EncodeBlock3)(x);
   auto content_features3 = x.adaptive_avg_pooling2d(1).view({x.shape()[0], -1});
-  
+
   x = (*EncodeBlock4)(x);
   auto content_features4 = x.adaptive_avg_pooling2d(1).view({x.shape()[0], -1});
 

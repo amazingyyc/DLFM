@@ -29,6 +29,7 @@
 #include "math/batch_norm2d.h"
 #include "math/conv2d.h"
 #include "math/var.h"
+#include "math/img_mask.h"
 #include "math/softmax.h"
 
 #ifdef HAS_NNPACK
@@ -671,6 +672,20 @@ Tensor Tensor::relu6(bool in_place) {
   }
 }
 
+Tensor Tensor::prelu(const Tensor &w, bool in_place) {
+  if (in_place) {
+    math::prelu(*this, w, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::prelu(*this, w, target);
+
+    return target;
+  }
+}
+
 Tensor Tensor::sigmoid(bool in_place) {
   if (in_place) {
     math::sigmoid(*this, *this);
@@ -1196,6 +1211,21 @@ Tensor Tensor::batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor 
   math::batch_norm2d(*this, mean, var, scale, shift, eps, output);
 
   return output;
+}
+
+Tensor Tensor::img_mask(const Tensor &mask, const Tensor &val) {
+  ARGUMENT_CHECK(3 == shape_.ndims(), "shape ndim must be 3");
+  ARGUMENT_CHECK(2 == mask.ndims() && 1 == val.ndims(), "mask/val shape error");
+  ARGUMENT_CHECK(shape_[-2] == mask.shape()[-2] && shape_[-1] == mask.shape()[-1], "shape error");
+  ARGUMENT_CHECK(shape_[0] == val.shape()[0], "shape error");
+  ARGUMENT_CHECK(mask.element_type_.is<uint8_t>(), "mask must be uint8_t");
+  ARGUMENT_CHECK(element_type_ == val.element_type_, "val element type must be same with input");
+
+  auto target = this->like();
+
+  math::img_mask(*this, mask, val, target);
+
+  return target;
 }
 
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {
