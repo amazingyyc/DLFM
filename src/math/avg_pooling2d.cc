@@ -4,20 +4,21 @@
 namespace dlfm::math {
 
 template <typename T>
-void avg_pooling2d_block_impl(T *input,
-                             T *output,
-                             int64_t start_channel,
-                             int64_t end_channel,
-                             int64_t input_height,
-                             int64_t input_width,
-                             int64_t output_height,
-                             int64_t output_width,
-                             int64_t kernel_height,
-                             int64_t kernel_width,
-                             int64_t stride_y,
-                             int64_t stride_x,
-                             int64_t pad_top,
-                             int64_t pad_left) {
+void avg_pooling2d_block_impl(
+  T *input,
+  T *output,
+  int64_t start_channel,
+  int64_t end_channel,
+  int64_t input_height,
+  int64_t input_width,
+  int64_t output_height,
+  int64_t output_width,
+  int64_t kernel_height,
+  int64_t kernel_width,
+  int64_t stride_y,
+  int64_t stride_x,
+  int64_t pad_top,
+  int64_t pad_left) {
   for (int64_t c = start_channel; c < end_channel; ++c) {
     for (int64_t o_y = 0; o_y < output_height; ++o_y) {
       for (int64_t o_x = 0; o_x < output_width; ++o_x) {
