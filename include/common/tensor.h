@@ -218,13 +218,27 @@ class Tensor {
   //-----------------------------------------------------------------------------------------------------------------------------------------
   template <typename T>
   std::ostream& pretty_print(std::ostream &os) const {
+    int64_t show_count = 50;
+
     auto ndims = shape_.ndims();
 
     if (1 == ndims) {
       os << "vector:\n";
 
-      for (int64_t i = 0; i < shape_.size(); ++i) {
-        os << std::setw(4) << data<T>()[i] << " ";
+      if (shape_.size() > 2 * show_count) {
+        for (int64_t i = 0; i < shape_.size() && i < show_count; ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
+
+        os << "...";
+
+        for (int64_t i = shape_.size() - show_count; i < shape_.size(); ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
+      } else {
+        for (int64_t i = 0; i < shape_.size(); ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
       }
 
       os << "\n";
@@ -235,8 +249,20 @@ class Tensor {
       auto row = shape_[-2];
 
       for (int64_t r = 0; r < row; ++r) {
-        for (int64_t c = 0; c < col; ++c) {
-          os << std::setw(4) << data<T>()[r * col + c] << " ";
+        if (col < show_count * 2) {
+          for (int64_t c = 0; c < col; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
+        } else {
+          for (int64_t c = 0; c < col && c < show_count; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
+
+          os << "...";
+
+          for (int64_t c = col - show_count; c < col; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
         }
 
         os << "\n";
@@ -251,8 +277,20 @@ class Tensor {
         os << "matrix " << i << ":\n";
 
         for (int64_t r = 0; r < row; ++r) {
-          for (int64_t c = 0; c < col; ++c) {
-            os << std::setw(4) << data<T>()[i * row * col +  r * col + c] << " ";
+          if (col < show_count * 2) {
+            for (int64_t c = 0; c < col; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
+          } else {
+            for (int64_t c = 0; c < col && c < show_count; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
+
+            os << "...";
+
+            for (int64_t c = col - show_count; c < col; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
           }
 
           os << "\n";

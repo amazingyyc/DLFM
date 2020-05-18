@@ -241,6 +241,11 @@ AnimeFace::AnimeFace(
 }
 
 Tensor AnimeFace::forward(Tensor input) {
+  // input must be [1, 3, 256, 256]
+  // output [1, 3, 256, 256]
+  ARGUMENT_CHECK(4 == input.ndims(), "input shape error");
+  ARGUMENT_CHECK(input.shape() == Shape({1, 3, 256, 256}), "input shape error");
+
   auto x = (*DownBlock)(input);
 
   auto gap = x.adaptive_avg_pooling2d(1);

@@ -6,7 +6,6 @@
 #include "module/upsample2d.h"
 #include "module/instance_norm2d.h"
 #include "module/reflection_pad2d.h"
-#include "math/instance_norm2d.h"
 #include "network/cartoon_face.h"
 
 namespace dlfm::nn::cartoon_face {
@@ -151,19 +150,17 @@ HourGlass::HourGlass(int64_t dim_in, int64_t dim_out, bool res) {
 
 Tensor HourGlass::forward(Tensor x) {
   auto ll = (*HG)(x);
+
   auto tmp_out = (*Conv1)(ll);
 
   if (use_res) {
     ll = (*Conv2)(ll);
-    tmp_out = (*Conv3)(tmp_out);
+    auto tmp_out_ = (*Conv3)(tmp_out);
 
-    tmp_out += x;
-    tmp_out += ll;
-
+    return x + ll + tmp_out_;
+  } else {
     return tmp_out;
   }
-
-  return tmp_out;
 }
 
 AdaLIN::AdaLIN(int64_t num_features, float e) {
@@ -422,20 +419,15 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
   });
 }
 
+// input [1, 3, 256, 256] float
+// output [1, 3, 256, 256] float
 Tensor CartoonFace::forward(Tensor x) {
-  // x must be uint8 dimension is [256, 256, 3]
-  ARGUMENT_CHECK(3 == x.ndims() && x.element_type().is<uint8_t>(), "CartoonFace input error");
-  ARGUMENT_CHECK(256 == x.shape()[0] && 256 == x.shape()[1] && 3 == x.shape()[2], "CartoonFace need dimension is [256, 256, 3]");
+  // input must be [1, 3, 256, 256]
+  // output [1, 3, 256, 256]
+  ARGUMENT_CHECK(4 == x.ndims(), "input shape error");
+  ARGUMENT_CHECK(x.shape() == Shape({1, 3, 256, 256}), "input shape error");
 
-  // -> [3, h, w]
-  x = x.transpose({2, 0, 1});
-
-  // float [3, h, w]
-  x = x.cast(ElementType::from<float>());
-  x /= 127.5;
-  x -= 1.0;
-  x = x.unsqueeze(0);
-
+  // [1, 32, 256]
   x = (*ConvBlock1)(x);
 
   x = (*HourGlass1)(x);
@@ -456,18 +448,20 @@ Tensor CartoonFace::forward(Tensor x) {
   x = (*EncodeBlock4)(x);
   auto content_features4 = x.adaptive_avg_pooling2d(1).view({x.shape()[0], -1});
 
-  auto gap = x.adaptive_avg_pooling2d(1);
+  // auto gap = x.adaptive_avg_pooling2d(1);
   // auto gap_logit = (*gap_fc)(gap.view({x.shape()[0], -1}));
   auto gap_weight = gap_fc->weight;
-  gap = x * gap_weight.unsqueeze(2).unsqueeze(3);
+  auto gap = x * gap_weight.unsqueeze(2).unsqueeze(3);
 
-  auto gmp = x.adaptive_max_pooling2d(1);
+  // auto gmp = x.adaptive_max_pooling2d(1);
   // auto gmp_logit = (*gmp_fc)(gmp.view({x.shape()[0], -1}));
   auto gmp_weight = gmp_fc->weight;
-  gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3);
+  auto gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3);
 
   // auto cam_logit = gap_logit.cat(gmp_logit, 1);
   x = gap.cat(gmp, 1);
+
+  // [1, 128, 64, 64]
   x = (*relu)((*conv1x1)(x));
 
   // auto heatmap = x.sum(1, true);
@@ -488,18 +482,13 @@ Tensor CartoonFace::forward(Tensor x) {
   x = (*UpBlock1)(x);
   x = (*UpBlock2)(x);
 
+  // x [1, 32, 256, 256]
   x = (*HourGlass3)(x);
   x = (*HourGlass4)(x);
+
   auto out = (*ConvBlock2)(x);
 
-  // convert to rgb
-  // [3, h, w]
-  out = out.squeeze(0);
-  out += 1.0;
-  out *= 127.5;
-  out = out.clamp(0, 255, true).cast(ElementType::from<uint8_t>());
-
-  return out.transpose({1, 2, 0});
+  return out;
 }
 
 }

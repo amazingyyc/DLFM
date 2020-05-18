@@ -4,6 +4,7 @@
 #include "network/style_transformer.h"
 #include "network/cartoon_face.h"
 #include "network/human_seg.h"
+#include "network/anime_face.h"
 
 namespace dlfm {
 namespace test {
@@ -38,11 +39,16 @@ void cartoon_face_test() {
   cartoon.torch_name_scope("cartoon_face");
   cartoon.load_torch_model("/Users/yanyuanchi/code/photo2cartoon/dlfm");
 
-  auto input = Tensor::ones({1, 3, 256, 256});
+  auto i1 = Tensor::ones({1, 2, 32, 32});
+  auto i2 = Tensor::zeros({1, 1, 32, 32});
+
+
+  auto input = i1.cat(i2, 1);
+  input = Tensor::ones({1, 3, 32, 32});
 
   auto output = cartoon(input);
 
-  std::cout << output[0][0] << "\n";
+  std::cout << output << "\n";
 }
 
 void human_seg_test() {
@@ -50,7 +56,8 @@ void human_seg_test() {
   seg.torch_name_scope("human_seg");
   seg.load_torch_model("/Users/yanyuanchi/code/Human-Segmentation-PyTorch/pretrain_model/dlfm");
 
-  auto input = Tensor::ones({1, 3, 256, 256});
+  // auto input = Tensor::ones({1, 3, 256, 256});
+  auto input = Tensor::create({256, 256, 3}, ElementType::from<uint8_t>());
 
   auto output = seg(input);
 
@@ -60,6 +67,19 @@ void human_seg_test() {
   tt = tt[1];
   tt = tt[0];
   std::cout << tt << "\n";
+}
+
+void anime_face_test() {
+  nn::anime_face::AnimeFace anime_face(3, 3, 64, 4, 256);
+  anime_face.torch_name_scope("anime_face");
+  anime_face.load_torch_model("/Users/yanyuanchi/code/UGATIT-pytorch/dlfm");
+
+  auto input = Tensor::ones({1, 3, 256, 256});
+
+  // [1, 3, 256, 256]
+  auto output = anime_face(input);
+
+  std::cout << output[0][2][1];
 }
 
 }

@@ -1,5 +1,6 @@
 #include "module/prelu.h"
 #include "module/tanh.h"
+#include "module/batch_norm2d.h"
 #include "network/srgan.h"
 
 namespace dlfm::nn::srgan {
@@ -36,7 +37,7 @@ SubPixelConvolutionalBlock::SubPixelConvolutionalBlock(int64_t kernel_size, int6
 }
 
 Tensor SubPixelConvolutionalBlock::forward(Tensor input) {
-  auto output = (*conv)(intput);
+  auto output = (*conv)(input);
   output = output.pixel_shuffle(scaling_factor);
 
   return (*prelu)(output);

@@ -209,11 +209,13 @@ HumanSeg::HumanSeg(int64_t num_classes) {
 }
 
 Tensor HumanSeg::forward(Tensor input) {
-  // x must be uint8 dimension is [256, 256, 3]
   ARGUMENT_CHECK(3 == input.ndims() && input.element_type().is<uint8_t>(), "HumanSeg input error");
-  ARGUMENT_CHECK(256 == input.shape()[0] && 256 == input.shape()[1] && 3 == input.shape()[2], "HumanSeg need dimension is [256, 256, 3]");
+  ARGUMENT_CHECK(0 == input.shape()[0] % 2 && 0 == input.shape()[1] % 2 && 3 == input.shape()[2], "HumanSeg shape error");
 
-  // -> [3, 256, 256]
+  int64_t height = input.shape()[0];
+  int64_t width = input.shape()[1];
+
+  // -> [3, height, width]
   input = input.transpose({ 2, 0, 1 });
 
   // cast to float.
@@ -225,7 +227,7 @@ Tensor HumanSeg::forward(Tensor input) {
 
   auto mobilenetv2 = backbone->features->sub_modules();
 
-  // [1, 3, 256, 256]
+  // [1, 3, height, width]
   auto x = input.unsqueeze(0);
 
   for (int i = 0; i < 2; ++i) {
@@ -264,14 +266,14 @@ Tensor HumanSeg::forward(Tensor input) {
   x = (*decoder4)({x, x1});
   x = (*conv_last)(x);
 
-  // [1, 2, 256, 256]
-  x = x.interpolate2d({ input.shape()[2], input.shape()[3] }, "bilinear", true);
-  x = x.reshape({2, 256, 256});
+  x = x.interpolate2d({ height, width }, "bilinear", true);
+  x = x.reshape({2, height, width});
 
-  // [2, 256, 256]
+  // [2, height, width]
   x = x.softmax(0);
 
-  return x;
+  // fetch [1, ... ]
+  return x[1];
 }
 
 }

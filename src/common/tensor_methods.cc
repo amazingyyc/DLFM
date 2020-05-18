@@ -1034,7 +1034,7 @@ Tensor Tensor::interpolate2d(std::vector<int64_t> size, std::string mode, bool a
   std::vector<int64_t> output_dims = {shape_[0], shape_[1], size[0], size[1]};
 
   if (size[0] == shape_[2] && size[1] == shape_[3]) {
-    return this->clone();
+    return *this;
   }
 
   auto output = Tensor::create(output_dims, element_type_);

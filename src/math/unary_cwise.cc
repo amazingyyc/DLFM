@@ -14,6 +14,8 @@ void assign_impl(Eigen::ThreadPoolDevice *eigen_device, T *x, T *y, int64_t n) {
 void assign(const Tensor &x, Tensor &y) {
   if (x.element_type().is<float>()) {
     assign_impl<float>(x.eigen_device().get(), x.data<float>(), y.data<float>(), x.size());
+  } else if (x.element_type().is<uint8_t>()) {
+    assign_impl<uint8_t>(x.eigen_device().get(), x.data<uint8_t>(), y.data<uint8_t>(), x.size());
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " nor support!");
   }
