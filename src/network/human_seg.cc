@@ -209,18 +209,14 @@ HumanSeg::HumanSeg(int64_t num_classes) {
 }
 
 Tensor HumanSeg::forward(Tensor input) {
-  ARGUMENT_CHECK(3 == input.ndims() && input.element_type().is<uint8_t>(), "HumanSeg input error");
-  ARGUMENT_CHECK(0 == input.shape()[0] % 2 && 0 == input.shape()[1] % 2 && 3 == input.shape()[2], "HumanSeg shape error");
+  // input must [3, h, w] and float [0-255]
+  ARGUMENT_CHECK(3 == input.ndims() && input.element_type().is<float>(), "HumanSeg input error");
+  ARGUMENT_CHECK(0 == input.shape()[1] % 2 && 0 == input.shape()[2] % 2 && 3 == input.shape()[0], "HumanSeg shape error");
 
-  int64_t height = input.shape()[0];
-  int64_t width = input.shape()[1];
+  int64_t height = input.shape()[1];
+  int64_t width = input.shape()[2];
 
-  // -> [3, height, width]
-  input = input.transpose({ 2, 0, 1 });
-
-  // cast to float.
-  input = input.cast(ElementType::from<float>());
-  input *= (1 / 255.0);
+  input = input * (1 / 255.0);
 
   // normalize
   input = input.normalize(mean, std, true);

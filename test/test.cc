@@ -1,3 +1,4 @@
+#include <network/srgan.h>
 #include "common/tensor.h"
 #include "test.h"
 #include "network/tiny_unet.h"
@@ -80,6 +81,19 @@ void anime_face_test() {
   auto output = anime_face(input);
 
   std::cout << output[0][2][1];
+}
+
+void srgan_test() {
+  nn::srgan::SRResNet srres_net;
+  srres_net.torch_name_scope("srgan.net");
+  srres_net.load_torch_model("/Users/yanyuanchi/code/a-PyTorch-Tutorial-to-Super-Resolution/dlfm");
+
+  auto input = Tensor::ones({3, 2, 2});
+
+  auto output = srres_net(input);
+
+
+  //std::cout << output[0][2][1];
 }
 
 }

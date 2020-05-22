@@ -201,11 +201,6 @@ Tensor MobileNetV2::forward(Tensor x) {
 
   auto pre = (*pred)(up_1_1);
 
-//  if (add_edge) {
-//    auto edg = (*edge)(up_1_1);
-//
-//  }
-
   return pre;
 }
 

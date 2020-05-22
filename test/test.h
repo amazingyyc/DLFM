@@ -16,6 +16,8 @@ void human_seg_test();
 
 void anime_face_test();
 
+void srgan_test();
+
 }
 }
 

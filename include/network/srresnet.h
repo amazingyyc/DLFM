@@ -5,15 +5,16 @@
 #include "module/module.h"
 #include "module/sequential.h"
 #include "module/conv2d.h"
+#include "module/relu6.h"
 
 namespace dlfm::nn::srresnet {
 
 class ResNet : public ModuleImpl {
 public:
   Conv2d conv1;
-  Relu relu1;
+  Relu6 relu1;
   Conv2d conv2;
-  Relu relu2;
+  Relu6 relu2;
 
   ResNet(int64_t in_channels = 32, int64_t out_channels = 32, int64_t kernel_size = 3, int64_t stride = 1, int64_t padding = 1);
 
@@ -37,3 +38,5 @@ public:
 };
 
 }
+
+#endif

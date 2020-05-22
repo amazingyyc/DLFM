@@ -4,6 +4,7 @@
 #include "common/tensor.h"
 #include "module/module.h"
 #include "module/conv2d.h"
+#include "module/prelu.h"
 #include "module/sequential.h"
 
 namespace dlfm::nn::srgan {
@@ -12,7 +13,13 @@ class ConvolutionalBlock : public ModuleImpl {
 public:
   Sequential conv_block;
 
-  ConvolutionalBlock(int64_t in_channels, int64_t out_channels, int64_t kernel_size, int64_t stride=1, bool batch_norm=false, std::string activation="");
+  ConvolutionalBlock(
+          int64_t in_channels,
+          int64_t out_channels,
+          int64_t kernel_size,
+          int64_t stride=1, bool
+          batch_norm=false,
+          const std::string& activation="");
 
 public:
   Tensor forward(Tensor) override;
@@ -54,6 +61,9 @@ public:
   Sequential subpixel_convolutional_blocks;
 
   std::shared_ptr<ConvolutionalBlock> conv_block3;
+
+  Tensor mean;
+  Tensor std;
 
   SRResNet(int64_t large_kernel_size=9, int64_t small_kernel_size=3, int64_t n_channels=64, int64_t n_blocks=16, int64_t scaling_factor=4);
 
