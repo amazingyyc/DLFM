@@ -4,7 +4,7 @@
 #include "common/tensor.h"
 #include "module/module.h"
 #include "module/sequential.h"
-#include "moduel/conv2d.h"
+#include "module/conv2d.h"
 
 namespace dlfm::nn::vdsr {
 
