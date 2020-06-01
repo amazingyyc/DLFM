@@ -37,7 +37,7 @@ void batch_norm2d_f32_block_impl(
   float32x4_t scale_v_t = vdupq_n_f32(scale_v);
   float32x4_t shift_v_t = vdupq_n_f32(shift_v);
 
-  for (; l < limit; l + 4) {
+  for (; l < limit; l += 4) {
     float32x4_t xv = vld1q_f32(x_ptr + l);
     float32x4_t tv = vmulq_f32(vsubq_f32(xv, mean_v_t), variance_rsqrt_v_t);
     float32x4_t yv = vaddq_f32(vmulq_f32(tv, scale_v_t), shift_v_t);

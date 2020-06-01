@@ -136,12 +136,18 @@ class Tensor {
   Tensor std(int64_t axis, const Tensor &mean, bool unbiased = true);
   Tensor std(int64_t axis, bool keep_dims = false, bool unbiased = true);
 
+  Tensor softmax(int64_t axis);
+
   Tensor clamp(float min, float max, bool in_place=false);
 
   // set all element of this tensor to be value.
   Tensor fill(float);
 
   Tensor relu(bool);
+
+  Tensor relu6(bool);
+
+  Tensor prelu(const Tensor &w, bool);
 
   Tensor sigmoid(bool);
 
@@ -189,10 +195,14 @@ class Tensor {
 
   Tensor upsample2d(float scale_factor, std::string mode="nearest", bool align_corners = false);
 
+  Tensor interpolate2d(std::vector<int64_t> output_size, std::string mode="nearest", bool align_corners = false);
+
+  Tensor pixel_shuffle(int64_t upscale_factor);
+
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
-  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, int64_t groups = 1);
+  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups = 1);
 
   // transpose conv2d
   Tensor conv_transpose2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, std::vector<size_t> out_padding);
@@ -200,16 +210,35 @@ class Tensor {
   Tensor instance_norm2d(float eps = 1e-05);
   Tensor instance_norm2d(const Tensor &scale, const Tensor &shift, float eps = 1e-05);
 
+  Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
+
+  // special for img
+  Tensor img_mask(const Tensor &mask, const Tensor &val);
+
   //-----------------------------------------------------------------------------------------------------------------------------------------
   template <typename T>
   std::ostream& pretty_print(std::ostream &os) const {
+    int64_t show_count = 50;
+
     auto ndims = shape_.ndims();
 
     if (1 == ndims) {
       os << "vector:\n";
 
-      for (int64_t i = 0; i < shape_.size(); ++i) {
-        os << std::setw(4) << data<T>()[i] << " ";
+      if (shape_.size() > 2 * show_count) {
+        for (int64_t i = 0; i < shape_.size() && i < show_count; ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
+
+        os << "...";
+
+        for (int64_t i = shape_.size() - show_count; i < shape_.size(); ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
+      } else {
+        for (int64_t i = 0; i < shape_.size(); ++i) {
+          os << std::setw(4) << data<T>()[i] << " ";
+        }
       }
 
       os << "\n";
@@ -220,8 +249,20 @@ class Tensor {
       auto row = shape_[-2];
 
       for (int64_t r = 0; r < row; ++r) {
-        for (int64_t c = 0; c < col; ++c) {
-          os << std::setw(4) << data<T>()[r * col + c] << " ";
+        if (col < show_count * 2) {
+          for (int64_t c = 0; c < col; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
+        } else {
+          for (int64_t c = 0; c < col && c < show_count; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
+
+          os << "...";
+
+          for (int64_t c = col - show_count; c < col; ++c) {
+            os << std::setw(4) << data<T>()[r * col + c] << " ";
+          }
         }
 
         os << "\n";
@@ -236,8 +277,20 @@ class Tensor {
         os << "matrix " << i << ":\n";
 
         for (int64_t r = 0; r < row; ++r) {
-          for (int64_t c = 0; c < col; ++c) {
-            os << std::setw(4) << data<T>()[i * row * col +  r * col + c] << " ";
+          if (col < show_count * 2) {
+            for (int64_t c = 0; c < col; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
+          } else {
+            for (int64_t c = 0; c < col && c < show_count; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
+
+            os << "...";
+
+            for (int64_t c = col - show_count; c < col; ++c) {
+              os << std::setw(4) << data<T>()[i * row * col + r * col + c] << " ";
+            }
           }
 
           os << "\n";

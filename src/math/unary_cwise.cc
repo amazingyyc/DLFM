@@ -14,6 +14,8 @@ void assign_impl(Eigen::ThreadPoolDevice *eigen_device, T *x, T *y, int64_t n) {
 void assign(const Tensor &x, Tensor &y) {
   if (x.element_type().is<float>()) {
     assign_impl<float>(x.eigen_device().get(), x.data<float>(), y.data<float>(), x.size());
+  } else if (x.element_type().is<uint8_t>()) {
+    assign_impl<uint8_t>(x.eigen_device().get(), x.data<uint8_t>(), y.data<uint8_t>(), x.size());
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " nor support!");
   }
@@ -82,7 +84,7 @@ void sub(float value, const Tensor &x, Tensor &y) {
 
 #if defined(__ARM_NEON__)
     float32x4_t value_v = vdupq_n_f32(value);
-    
+
     for (; idx < limit; idx += 4) {
       float32x4_t xv = vld1q_f32(x + idx);
       vst1q_f32(y + idx, vsubq_f32(value_v, xv));
@@ -127,7 +129,7 @@ void divide(float value, const Tensor &x, Tensor &y) {
 
 #if defined(__ARM_NEON__)
     float32x4_t value_v = vdupq_n_f32(value);
-    
+
     for (; idx < limit; idx += 4) {
       float32x4_t xv = vld1q_f32(x + idx);
       vst1q_f32(y + idx, vdivq_f32(value_v, xv));

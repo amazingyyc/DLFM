@@ -307,10 +307,10 @@ v4sf cos_ps(v4sf x) {
   return ycos;
 }
 
-v4sf sigmoid_ps(v4sf x) {
+v4sf sigmoid_ps(v4sf p) {
   v4sf one = vdupq_n_f32(1.f);
 
-  v4sf p = vnegq_f32(_p);
+  p = vnegq_f32(p);
   p = exp_ps(p);
   p = vaddq_f32(p, one);
 
@@ -332,6 +332,8 @@ float32x4_t sqrt_ps(float32x4_t q_x) {
   const float32x4_t q_step_2 = vmulq_f32(q_step_1, q_step_result1);
   // mul by x to get sqrt, not rsqrt
   return vmulq_f32(q_x, q_step_2);
+}
+
 }
 
 #endif

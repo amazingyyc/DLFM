@@ -88,10 +88,10 @@ Tensor Transformer::forward(Tensor x) {
   ARGUMENT_CHECK(x.element_type().is<uint8_t>(), "style Transformer need uint8 input");
   ARGUMENT_CHECK(3 == x.shape().ndims() && 3 == x.shape()[2], "style Transformer input shape error");
   ARGUMENT_CHECK(x.shape()[0] >= 32 && 0 == x.shape()[0] % 4 && x.shape()[1] >= 32 && 0 == x.shape()[1] % 4,  "style Transformer input shape error");
-  
+
   // -> [3, h, w]
   x = x.transpose({2, 0, 1});
-  
+
   // float [3, h, w]
   x = x.cast(ElementType::from<float>());
   x *= (1 / 255.0);

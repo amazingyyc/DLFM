@@ -4,23 +4,24 @@ namespace dlfm {
 namespace math {
 
 template <typename T>
-void conv_transpose2d_block_impl(T *mat,
-                                 T *bias,
-                                 T *output,
-                                 int64_t input_channel,
-                                 int64_t input_height,
-                                 int64_t input_width,
-                                 int64_t output_channel,
-                                 int64_t start_output_channel,
-                                 int64_t end_output_channel,
-                                 int64_t output_height,
-                                 int64_t output_width,
-                                 int64_t kernel_height,
-                                 int64_t kernel_width,
-                                 int64_t stride_height,
-                                 int64_t stride_width,
-                                 int64_t pad_top,
-                                 int64_t pad_left) {
+void conv_transpose2d_block_impl(
+  T *mat,
+  T *bias,
+  T *output,
+  int64_t input_channel,
+  int64_t input_height,
+  int64_t input_width,
+  int64_t output_channel,
+  int64_t start_output_channel,
+  int64_t end_output_channel,
+  int64_t output_height,
+  int64_t output_width,
+  int64_t kernel_height,
+  int64_t kernel_width,
+  int64_t stride_height,
+  int64_t stride_width,
+  int64_t pad_top,
+  int64_t pad_left) {
   for (int64_t oy = 0; oy < output_height; ++oy) {
     int64_t iy = oy - pad_top;
 
@@ -78,22 +79,23 @@ void conv_transpose2d_block_impl(T *mat,
 }
 
 template <typename T>
-void conv_transpose2d_impl(Eigen::ThreadPoolDevice *eigen_device,
-                           T *mat,
-                           T *bias,
-                           T *output,
-                           int64_t input_channel,
-                           int64_t input_height,
-                           int64_t input_width,
-                           int64_t output_channel,
-                           int64_t output_height,
-                           int64_t output_width,
-                           int64_t kernel_height,
-                           int64_t kernel_width,
-                           int64_t stride_height,
-                           int64_t stride_width,
-                           int64_t pad_top,
-                           int64_t pad_left) {
+void conv_transpose2d_impl(
+  Eigen::ThreadPoolDevice *eigen_device,
+  T *mat,
+  T *bias,
+  T *output,
+  int64_t input_channel,
+  int64_t input_height,
+  int64_t input_width,
+  int64_t output_channel,
+  int64_t output_height,
+  int64_t output_width,
+  int64_t kernel_height,
+  int64_t kernel_width,
+  int64_t stride_height,
+  int64_t stride_width,
+  int64_t pad_top,
+  int64_t pad_left) {
   int64_t num_threads = (int64_t)eigen_device->numThreads();
 
   int64_t block_size = (output_channel + num_threads - 1) / num_threads;

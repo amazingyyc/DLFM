@@ -32,6 +32,8 @@ public:
   AdaILN(int64_t num_features, float eps=1e-5);
 
 public:
+  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+
   Tensor forward(std::vector<Tensor>) override;
 };
 
@@ -63,6 +65,8 @@ public:
   ILN(int64_t num_features, float eps=1e-5);
 
 public:
+  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+
   Tensor forward(Tensor) override;
 };
 
@@ -100,7 +104,7 @@ public:
     int64_t ngf=64,
     int64_t n_blocks=6,
     int64_t img_size=256,
-    bool light=false);
+    bool light=true);
 
 public:
   Tensor forward(Tensor) override;

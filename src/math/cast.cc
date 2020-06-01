@@ -5,8 +5,18 @@ namespace math {
 
 template <typename From, typename To>
 void cast_block_impl(From *x, To *y, int64_t n) {
-  for (int64_t i = 0; i < n; ++i) {
-    y[i] = static_cast<To>(x[i]);
+  int64_t limit = n / 4 * 4;
+  int64_t l = 0;
+
+  for (; l < limit; l += 4) {
+    y[l] = (To)(x[l]);
+    y[l + 1] = (To)(x[l + 1]);
+    y[l + 2] = (To)(x[l + 2]);
+    y[l + 3] = (To)(x[l + 3]);
+  }
+
+  for (; l < n; ++l) {
+    y[l] = (To)(x[l]);
   }
 }
 

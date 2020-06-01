@@ -12,6 +12,12 @@ void style_transformer_test();
 
 void cartoon_face_test();
 
+void human_seg_test();
+
+void anime_face_test();
+
+void srgan_test();
+
 }
 }
 

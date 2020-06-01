@@ -1,4 +1,5 @@
 #include "math/sigmoid.h"
+#include "math/neon_mathfun.h"
 
 namespace dlfm {
 namespace math {

@@ -11,11 +11,13 @@ public:
   Tensor weight;
   Tensor bias;
 
-  bool has_bias;
-
   std::vector<size_t> kernel_size;
   std::vector<size_t> stride;
   std::vector<size_t> padding;
+
+  size_t groups;
+
+  bool has_bias;
 
   Conv2dImpl(
       int64_t in_channel,
@@ -23,6 +25,7 @@ public:
       std::vector<size_t> kernel_size,
       std::vector<size_t> stride,
       std::vector<size_t> padding,
+      size_t groups,
       bool has_bias);
 
 public:
@@ -40,6 +43,7 @@ Conv2d conv2d(
         std::vector<size_t> kernel_size,
         std::vector<size_t> stride,
         std::vector<size_t> padding,
+        size_t groups=1,
         bool has_bias=true);
 
 Conv2d conv2d(
@@ -48,6 +52,7 @@ Conv2d conv2d(
   size_t kernel_size,
   size_t stride = 1,
   size_t padding = 0,
+  size_t groups=1,
   bool has_bias = true);
 
 }

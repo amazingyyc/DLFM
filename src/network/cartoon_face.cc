@@ -6,7 +6,6 @@
 #include "module/upsample2d.h"
 #include "module/instance_norm2d.h"
 #include "module/reflection_pad2d.h"
-#include "math/instance_norm2d.h"
 #include "network/cartoon_face.h"
 
 namespace dlfm::nn::cartoon_face {
@@ -18,27 +17,27 @@ ConvBlock::ConvBlock(int64_t in, int64_t out) {
     instance_norm2d(in, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(in, out / 2, 3, 1, 0, false)
+    conv2d(in, out / 2, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock2, sequential, {
     instance_norm2d(out / 2, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(out / 2, out / 4, 3, 1, 0, false)
+    conv2d(out / 2, out / 4, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock3, sequential, {
     instance_norm2d(out / 4, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(out / 4, out / 4, 3, 1, 0, false)
+    conv2d(out / 4, out / 4, 3, 1, 0, 1, false)
   });
 
   ADD_SUB_MODULE(ConvBlock4, sequential, {
     instance_norm2d(in, 1e-05, false),
     relu(true),
-    conv2d(in, out, 1, 1, 0, false)
+    conv2d(in, out, 1, 1, 0, 1, false)
   });
 }
 
@@ -81,17 +80,17 @@ Tensor HourGlassBlock::forward(Tensor x) {
   auto down1 = skip1.avg_pooling2d(2, 2);
   down1 = (*ConvBlock1_2)(down1);
 
-  auto skip2 = (*ConvBlock1_1)(down1);
+  auto skip2 = (*ConvBlock2_1)(down1);
   auto down2 = down1.avg_pooling2d(2, 2);
-  down2 = (*ConvBlock1_2)(down2);
+  down2 = (*ConvBlock2_2)(down2);
 
-  auto skip3 = (*ConvBlock1_1)(down2);
+  auto skip3 = (*ConvBlock3_1)(down2);
   auto down3 = down2.avg_pooling2d(2, 2);
-  down3 = (*ConvBlock1_2)(down3);
+  down3 = (*ConvBlock3_2)(down3);
 
-  auto skip4 = (*ConvBlock1_1)(down3);
+  auto skip4 = (*ConvBlock4_1)(down3);
   auto down4 = down3.avg_pooling2d(2, 2);
-  down4 = (*ConvBlock1_2)(down4);
+  down4 = (*ConvBlock4_2)(down4);
 
   auto center = (*ConvBlock5)(down4);
 
@@ -117,11 +116,11 @@ Tensor HourGlassBlock::forward(Tensor x) {
 ResnetBlock::ResnetBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(conv_block, sequential, {
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
     instance_norm2d(dim, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
     instance_norm2d(dim, 1e-05, false)
   });
 }
@@ -136,7 +135,7 @@ HourGlass::HourGlass(int64_t dim_in, int64_t dim_out, bool res) {
   ADD_SUB_MODULE(HG, sequential, {
     std::make_shared<HourGlassBlock>(dim_in, dim_out),
     std::make_shared<ConvBlock>(dim_out, dim_out),
-    conv2d(dim_out, dim_out, 1, 1, 0, false),
+    conv2d(dim_out, dim_out, 1, 1, 0, 1, false),
     instance_norm2d(dim_out, 1e-05, false),
     relu(true)
   });
@@ -151,16 +150,17 @@ HourGlass::HourGlass(int64_t dim_in, int64_t dim_out, bool res) {
 
 Tensor HourGlass::forward(Tensor x) {
   auto ll = (*HG)(x);
+
   auto tmp_out = (*Conv1)(ll);
 
   if (use_res) {
     ll = (*Conv2)(ll);
-    tmp_out = (*Conv3)(tmp_out);
+    auto tmp_out_ = (*Conv3)(tmp_out);
 
-    return x + ll + tmp_out;
+    return x + ll + tmp_out_;
+  } else {
+    return tmp_out;
   }
-
-  return tmp_out;
 }
 
 AdaLIN::AdaLIN(int64_t num_features, float e) {
@@ -263,12 +263,12 @@ Tensor SoftAdaLIN::forward(std::vector<Tensor> input) {
 
 ResnetSoftAdaLINBlock::ResnetSoftAdaLINBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(pad1, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, use_bias);
+  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
   ADD_SUB_MODULE(norm1, std::make_shared<SoftAdaLIN>, dim);
   ADD_SUB_MODULE(relu1, relu, true);
 
   ADD_SUB_MODULE(pad2, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, use_bias);
+  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
   ADD_SUB_MODULE(norm2, std::make_shared<SoftAdaLIN>, dim);
 }
 
@@ -285,7 +285,7 @@ Tensor ResnetSoftAdaLINBlock::forward(std::vector<Tensor> input) {
   out = (*pad2)(out);
   out = (*conv2)(out);
   out = (*norm2)({out, content_features, style_features});
-  
+
   return out + x;
 }
 
@@ -340,7 +340,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(ConvBlock1, sequential, {
     reflection_pad2d(3),
-    conv2d(3, ngf, 7, 1, 0, false),
+    conv2d(3, ngf, 7, 1, 0, 1, false),
     instance_norm2d(ngf, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
@@ -350,14 +350,14 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(DownBlock1, sequential, {
     reflection_pad2d(1),
-    conv2d(ngf, ngf * 2, 3, 2, 0, false),
+    conv2d(ngf, ngf * 2, 3, 2, 0, 1, false),
     instance_norm2d(ngf * 2, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
 
   ADD_SUB_MODULE(DownBlock2, sequential, {
     reflection_pad2d(1),
-    conv2d(ngf * 2, ngf * 4, 3, 2, 0, false),
+    conv2d(ngf * 2, ngf * 4, 3, 2, 0, 1, false),
     instance_norm2d(ngf * 4, 1e-05, false),
     std::make_shared<ReluImpl>(true)
   });
@@ -396,7 +396,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
   ADD_SUB_MODULE(UpBlock1, sequential, {
     upsample2d(2),
     reflection_pad2d(1),
-    conv2d(ngf * 4, ngf * 2, 3, 1, 0, false),
+    conv2d(ngf * 4, ngf * 2, 3, 1, 0, 1, false),
     std::make_shared<LIN>(ngf * 2),
     std::make_shared<ReluImpl>(true)
   });
@@ -404,7 +404,7 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
   ADD_SUB_MODULE(UpBlock2, sequential, {
     upsample2d(2),
     reflection_pad2d(1),
-    conv2d(ngf * 2, ngf, 3, 1, 0, false),
+    conv2d(ngf * 2, ngf, 3, 1, 0, 1, false),
     std::make_shared<LIN>(ngf),
     std::make_shared<ReluImpl>(true)
   });
@@ -414,25 +414,20 @@ CartoonFace::CartoonFace(int64_t ngf, int64_t img_size, bool l) {
 
   ADD_SUB_MODULE(ConvBlock2, sequential, {
     reflection_pad2d(3),
-    conv2d(3, 3, 7, 1, 0, false),
+    conv2d(3, 3, 7, 1, 0, 1, false),
     tanh(true)
   });
 }
 
+// input [1, 3, 256, 256] float
+// output [1, 3, 256, 256] float
 Tensor CartoonFace::forward(Tensor x) {
-  // x must be uint8 dimension is [256, 256, 3]
-  ARGUMENT_CHECK(3 == x.ndims() && x.element_type().is<uint8_t>(), "CartoonFace input error");
-  ARGUMENT_CHECK(256 == x.shape()[0] && 256 == x.shape()[1] && 3 == x.shape()[2], "CartoonFace need dimension is [256, 256, 3]");
+  // input must be [1, 3, 256, 256]
+  // output [1, 3, 256, 256]
+  ARGUMENT_CHECK(4 == x.ndims(), "input shape error");
+  ARGUMENT_CHECK(x.shape() == Shape({1, 3, 256, 256}), "input shape error");
 
-  // -> [3, h, w]
-  x = x.transpose({2, 0, 1});
-
-  // float [3, h, w]
-  x = x.cast(ElementType::from<float>());
-  x /= 127.5;
-  x -= 1.0;
-  x = x.unsqueeze(0);
-
+  // [1, 32, 256]
   x = (*ConvBlock1)(x);
 
   x = (*HourGlass1)(x);
@@ -449,22 +444,24 @@ Tensor CartoonFace::forward(Tensor x) {
 
   x = (*EncodeBlock3)(x);
   auto content_features3 = x.adaptive_avg_pooling2d(1).view({x.shape()[0], -1});
-  
+
   x = (*EncodeBlock4)(x);
   auto content_features4 = x.adaptive_avg_pooling2d(1).view({x.shape()[0], -1});
 
-  auto gap = x.adaptive_avg_pooling2d(1);
+  // auto gap = x.adaptive_avg_pooling2d(1);
   // auto gap_logit = (*gap_fc)(gap.view({x.shape()[0], -1}));
   auto gap_weight = gap_fc->weight;
-  gap = x * gap_weight.unsqueeze(2).unsqueeze(3);
+  auto gap = x * gap_weight.unsqueeze(2).unsqueeze(3);
 
-  auto gmp = x.adaptive_max_pooling2d(1);
+  // auto gmp = x.adaptive_max_pooling2d(1);
   // auto gmp_logit = (*gmp_fc)(gmp.view({x.shape()[0], -1}));
   auto gmp_weight = gmp_fc->weight;
-  gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3);
+  auto gmp = x * gmp_weight.unsqueeze(2).unsqueeze(3);
 
   // auto cam_logit = gap_logit.cat(gmp_logit, 1);
   x = gap.cat(gmp, 1);
+
+  // [1, 128, 64, 64]
   x = (*relu)((*conv1x1)(x));
 
   // auto heatmap = x.sum(1, true);
@@ -485,18 +482,13 @@ Tensor CartoonFace::forward(Tensor x) {
   x = (*UpBlock1)(x);
   x = (*UpBlock2)(x);
 
+  // x [1, 32, 256, 256]
   x = (*HourGlass3)(x);
   x = (*HourGlass4)(x);
+
   auto out = (*ConvBlock2)(x);
 
-  // convert to rgb
-  // [3, h, w]
-  out = out.squeeze(0);
-  out += 1.0;
-  out *= 127.5;
-  out = out.clamp(0, 255, true).cast(ElementType::from<uint8_t>());
-
-  return out.transpose({1, 2, 0});
+  return out;
 }
 
 }

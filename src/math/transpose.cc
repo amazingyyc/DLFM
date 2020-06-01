@@ -31,6 +31,8 @@ void transpose(const Tensor &x, Tensor &y, std::vector<size_t> axis) {
       transpose_impl<3, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), axis);
     } else if (4 == x.shape().ndims()) {
       transpose_impl<4, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), axis);
+    } else if (5 == x.shape().ndims()) {
+      transpose_impl<5, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), axis);
     } else {
       RUNTIME_ERROR("the rank of input is error");
     }
@@ -43,6 +45,8 @@ void transpose(const Tensor &x, Tensor &y, std::vector<size_t> axis) {
       transpose_impl<3, uint8_t>(x.eigen_device().get(), x.data<uint8_t>(), x.shape(), y.data<uint8_t>(), y.shape(), axis);
     } else if (4 == x.shape().ndims()) {
       transpose_impl<4, uint8_t>(x.eigen_device().get(), x.data<uint8_t>(), x.shape(), y.data<uint8_t>(), y.shape(), axis);
+    } else if (5 == x.shape().ndims()) {
+      transpose_impl<5, uint8_t>(x.eigen_device().get(), x.data<uint8_t>(), x.shape(), y.data<uint8_t>(), y.shape(), axis);
     } else {
       RUNTIME_ERROR("the rank of input is error");
     }

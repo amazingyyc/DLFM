@@ -26,7 +26,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mfpu=neon")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # install folder
-set(CMAKE_INSTALL_PREFIX ../dlfm)
+# set(CMAKE_INSTALL_PREFIX ../dlfm)
+# test
+set(CMAKE_INSTALL_PREFIX /Users/yanyuanchi/code/CartoonFace/cartoonface/third_party/dlfm)
+
 
 set(NNPACK_PREFIX ${PROJECT_SOURCE_DIR}/../third_party/NNPACK)
 set(NNPACK_DEP_PREFIX ${PROJECT_SOURCE_DIR}/../deps)
