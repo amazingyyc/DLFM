@@ -19,10 +19,15 @@ enum class DType : int16_t {
   Int64   = 9,
   Float32 = 10,
   Float64 = 11,
+  Float16 = 12,
 };
 
 // define a unknow type
 class UnKnownType {};
+
+struct float16 {
+  uint16_t value: 16;
+};
 
 class ElementType {
 private:
@@ -113,6 +118,10 @@ template <> inline bool ElementType::is<double>() const {
   return this->id_ == DType::Float64;
 }
 
+template <> inline bool ElementType::is<float16>() const {
+  return this->id_ == DType::Float16;
+}
+
 template <> inline ElementType ElementType::from<UnKnownType>() {
   return ElementType(DType::UnKnown, 0, "unknown");
 }
@@ -159,6 +168,11 @@ template <> inline ElementType ElementType::from<float>() {
 
 template <> inline ElementType ElementType::from<double>() {
   return ElementType(DType::Float64, sizeof(double), "float64");
+}
+
+template <> inline ElementType ElementType::from<float16>() {
+  assert(2 == sizeof(float16));
+  return ElementType(DType::Float16, sizeof(float16), "float16");
 }
 
 }
