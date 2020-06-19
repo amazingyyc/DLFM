@@ -85,6 +85,8 @@ Tensor Tensor::ones(const std::vector<int64_t> &dims, ElementType type) {
 // file format:
 // type[int32], rank[int32], dim0, dim1 .. [int32], data....
 Tensor Tensor::initialize_from_file(std::string path) {
+  ARGUMENT_CHECK(element_type_.is<float>(), "for now initialize_from_file only support float");
+
   std::ifstream fstream(path, std::fstream::binary | std::fstream::in);
 
   ARGUMENT_CHECK(fstream.is_open(), "file:" << path << " open error!");
@@ -93,7 +95,7 @@ Tensor Tensor::initialize_from_file(std::string path) {
   int type_id;
   fstream.read((char*)&type_id, sizeof(type_id));
 
-  ARGUMENT_CHECK(type_id == (int)element_type_.id(), "element type error");
+  ARGUMENT_CHECK(type_id == (int)DType::Float32 || type_id == (int)DType::Float16, "element type error");
 
   // read rank
   int rank;
@@ -112,8 +114,17 @@ Tensor Tensor::initialize_from_file(std::string path) {
 
   ARGUMENT_CHECK(shape == shape_, "shape error, file:" << path << "tensor shape:" << shape_.to_str() << ", file shape:" << shape.to_str());
 
-  fstream.read((char*)ptr(), num_bytes());
-  fstream.close();
+  if (type_id == (int)DType::Float32) {
+    fstream.read((char*)ptr(), num_bytes());
+    fstream.close();
+  } else {
+    auto half_tensor = Tensor::create(shape, ElementType::from<float16>());
+
+    fstream.read((char*)half_tensor.ptr(), half_tensor.num_bytes());
+    fstream.close();
+
+    *this = half_tensor.cast(ElementType::from<float>());
+  }
 
   return *this;
 }
