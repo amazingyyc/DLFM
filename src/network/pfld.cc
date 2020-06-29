@@ -9,7 +9,7 @@ Sequential conv_bn(int64_t inp, int64_t oup, int64_t kernel, int64_t stride, int
     relu(true)});
 }
 
-Conv2d conv_1x1_bn(int64_t inp, int64_t oup) {
+Sequential conv_1x1_bn(int64_t inp, int64_t oup) {
   return sequential({
     conv2d(inp, oup, 1, 1, 0, 1, false),
     batch_norm2d(oup),
@@ -26,14 +26,14 @@ InvertedResidual::InvertedResidual(int64_t inp, int64_t oup, int64_t s, bool use
     conv2d(inp, inp * expand_ratio, 1, 1, 0, 1, false),
     batch_norm2d(inp * expand_ratio),
     relu(true),
-    Conv2d(inp * expand_ratio, inp * expand_ratio, 3, stride, 1, inp * expand_ratio, false),
+    conv2d(inp * expand_ratio, inp * expand_ratio, 3, stride, 1, inp * expand_ratio, false),
     batch_norm2d(inp * expand_ratio),
     relu(true),
-    Conv2d(inp * expand_ratio, oup, 1, 1, 0, 1, false),
+    conv2d(inp * expand_ratio, oup, 1, 1, 0, 1, false),
     batch_norm2d(oup)});
 }
 
-Tensor InvertedResidual::forward(std::vector<Tensor> x) {
+Tensor InvertedResidual::forward(Tensor x) {
   if (use_res_connect) {
     auto y = (*conv)(x);
     y += x;
@@ -60,11 +60,11 @@ PFLDInference::PFLDInference() {
   ADD_SUB_MODULE(conv4_1, std::make_shared<InvertedResidual>, 64, 128, 2, false, 2);
 
   ADD_SUB_MODULE(conv5_1, std::make_shared<InvertedResidual>, 128, 128, 1, false, 4);
-  ADD_SUB_MODULE(conv5_2, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
-  ADD_SUB_MODULE(conv5_3, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
-  ADD_SUB_MODULE(conv5_4, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
-  ADD_SUB_MODULE(conv5_5, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
-  ADD_SUB_MODULE(conv5_6, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
+  ADD_SUB_MODULE(block5_2, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
+  ADD_SUB_MODULE(block5_3, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
+  ADD_SUB_MODULE(block5_4, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
+  ADD_SUB_MODULE(block5_5, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
+  ADD_SUB_MODULE(block5_6, std::make_shared<InvertedResidual>, 128, 128, 1, true, 4);
 
   ADD_SUB_MODULE(conv6_1, std::make_shared<InvertedResidual>, 128, 16, 1, false, 2);
 
@@ -76,7 +76,7 @@ PFLDInference::PFLDInference() {
   ADD_SUB_MODULE(fc, linear, 176, 196);
 }
 
-Tensor PFLDInference::forward(std::vector<Tensor> x) {
+Tensor PFLDInference::forward(Tensor x) {
   x = ((*bn1)((*conv1)(x))).relu(true);
   x = ((*bn2)((*conv2)(x))).relu(true);
 

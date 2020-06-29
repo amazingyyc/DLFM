@@ -7,6 +7,7 @@
 #include "module/relu.h"
 #include "module/conv2d.h"
 #include "module/instance_norm2d.h"
+#include "module/batch_norm2d.h"
 #include "module/reflection_pad2d.h"
 #include "module/zero_pad2d.h"
 #include "module/linear.h"
@@ -28,7 +29,7 @@ public:
   InvertedResidual(int64_t inp, int64_t oup, int64_t stride, bool use_res_connect, int64_t expand_ratio=6);
 
 public:
-  Tensor forward(std::vector<Tensor>) override;
+  Tensor forward(Tensor) override;
 };
 
 class PFLDInference : public ModuleImpl {
@@ -67,7 +68,9 @@ public:
   PFLDInference();
 
 public:
-  Tensor forward(std::vector<Tensor>) override;
+  Tensor forward(Tensor) override;
 };
 
 }
+
+#endif

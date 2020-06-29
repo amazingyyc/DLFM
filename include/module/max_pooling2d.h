@@ -21,6 +21,7 @@ public:
 using MaxPooling2d = std::shared_ptr<MaxPooling2dImpl>;
 
 MaxPooling2d max_pooling2d(std::vector<size_t> kernel, std::vector<size_t> stride, std::vector<size_t> padding);
+MaxPooling2d max_pooling2d(size_t kernel, size_t stride, size_t padding);
 
 }
 
