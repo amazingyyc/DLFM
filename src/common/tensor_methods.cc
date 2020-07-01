@@ -985,7 +985,7 @@ Tensor Tensor::adaptive_avg_pooling2d(std::vector<size_t> size) {
   ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_avg_pooling2d need ndims is 4");
 
   auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
-  
+
   math::adaptive_avg_pooling2d(*this, target);
 
   return target;
@@ -999,7 +999,7 @@ Tensor Tensor::adaptive_max_pooling2d(std::vector<size_t> size) {
   ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_max_pooling2d need ndims is 4");
 
   auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
-  
+
   math::adaptive_max_pooling2d(*this, target);
 
   return target;
@@ -1036,7 +1036,7 @@ Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corne
 
 Tensor Tensor::interpolate2d(std::vector<int64_t> size, std::string mode, bool align_corners) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "interpolate2d need rank is 4");
-  ARGUMENT_CHECK(size[0] > 0 && size[1] > 1, "size need > 0");
+  ARGUMENT_CHECK(size[0] > 0 && size[1] > 0, "size need > 0");
 
   if ("nearest" == mode) {
     ARGUMENT_CHECK(false == align_corners, "nearest mode only support align_corners is false")
