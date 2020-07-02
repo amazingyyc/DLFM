@@ -1,9 +1,9 @@
-#ifndef RESAMPLE_H
-#define RESAMPLE_H
+#ifndef VISION_RESAMPLE_H
+#define VISION_RESAMPLE_H
 
-#include "basic.h"
-#include "element_type.h"
-#include "tensor.h"
+#include "common/basic.h"
+#include "common/element_type.h"
+#include "common/tensor.h"
 
 namespace dlfm::vision {
 

@@ -23,7 +23,7 @@ BlazeBlock::BlazeBlock(int64_t in_channels, int64_t out_channels, int64_t kernel
   }
 
   ADD_SUB_MODULE(convs, sequential, {
-    conv2d(in_channels, out_channels, kernel_size, stride, padding, in_channels, true),
+    conv2d(in_channels, in_channels, kernel_size, stride, padding, in_channels, true),
     conv2d(in_channels, out_channels, 1, 1, 0, 1, true)});
 
   act = relu(true);
@@ -93,7 +93,7 @@ void BlazeFace::load_torch_model(std::string model_folder, std::string parent_na
   ModuleImpl::load_torch_model(model_folder, parent_name_scop);
 
   // load anchor
-  anchor.initialize_from_file(model_folder + FILE_SEP + "anchor" + TORCH_MODEL_FILE_SUFFIX);
+  anchor.initialize_from_file(model_folder + FILE_SEP + torch_name_scope_ + ".anchors" + TORCH_MODEL_FILE_SUFFIX);
 }
 
 // return shape: [num_anchors, 16]

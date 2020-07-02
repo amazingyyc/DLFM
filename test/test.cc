@@ -6,6 +6,8 @@
 #include "network/cartoon_face.h"
 #include "network/human_seg.h"
 #include "network/anime_face.h"
+#include "network/blaze_face.h"
+#include "vision/resample.h"
 
 namespace dlfm {
 namespace test {
@@ -96,5 +98,33 @@ void srgan_test() {
   //std::cout << output[0][2][1];
 }
 
+void blaze_face_test() {
+//  nn::blaze_face::BlazeFace blaze_face;
+//  blaze_face.torch_name_scope("blazeface");
+//  blaze_face.load_torch_model("/Users/yanyuanchi/code/BlazeFace/dlfm");
+//
+//  auto input = Tensor::ones({1, 3, 128, 128});
+//
+//  auto output = blaze_face.detect(input);
+//
+//  std::cout << output.size() << "\n";
+  auto x = Tensor::create({1280, 1024, 4}, ElementType::from<uint8_t>());
+
+  auto y = vision::resize(x, {128, 128});
+}
+
 }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -41,8 +41,8 @@ void resample_nearest_block_impl(
     for (int64_t ox = 0; ox < output_width; ++ox) {
       int64_t ix = round(cal_origin_index(input_width, output_width, ox, false));
 
-      T *in = input + iy * input_width * channel  + ix * input_width * channel;
-      T *out = output + oy * output_height * channel + ox * output_width * channel;
+      T *in = input + iy * input_width * channel  + ix * channel;
+      T *out = output + oy * output_height * channel + ox * channel;
 
       for (int64_t c = 0; c < channel; ++c) {
         out[c] = in[c];
@@ -102,7 +102,7 @@ Tensor resample_nearest(const Tensor &img, std::vector<int64_t> size) {
 
   auto output = Tensor::create({ output_height , output_width , channel}, img.element_type());
 
-  if (x.element_type().is<float>()) {
+  if (img.element_type().is<float>()) {
     resample_nearest_impl(
       img.eigen_device().get(),
       img.data<float>(),
@@ -112,7 +112,7 @@ Tensor resample_nearest(const Tensor &img, std::vector<int64_t> size) {
       output_height,
       output_width,
       channel);
-  } else if (x.element_type().is<uint8_t>()) {
+  } else if (img.element_type().is<uint8_t>()) {
     resample_nearest_impl(
       img.eigen_device().get(),
       img.data<uint8_t>(),
@@ -123,8 +123,10 @@ Tensor resample_nearest(const Tensor &img, std::vector<int64_t> size) {
       output_width,
       channel);
   } else {
-    RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
+    RUNTIME_ERROR("element type:" << img.element_type().name() << " not support!");
   }
+
+  return output;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +142,7 @@ void resample_bilinear_block_impl(
   int64_t output_width,
   int64_t channel,
   int64_t start_index,
-  int64_t end_index
+  int64_t end_index,
   bool align_corners) {
 
   float t_lowest = float(std::numeric_limits<T>::lowest());
@@ -175,9 +177,9 @@ void resample_bilinear_block_impl(
         float t = y_p_factor * (float(left_top[c]) * x_p_factor + float(right_top[c]) * x_r_factor) +
                   y_r_factor * (float(left_bottom[c]) * x_p_factor + float(right_bottom[c]) * x_r_factor);
 
-        t = std::clamp<float>(t, t_lowest, t_max);
+         t = std::clamp<float>(t, t_lowest, t_max);
 
-        out[c] = (T)t;
+         out[c] = (T)t;
       }
     }
   }
@@ -236,7 +238,7 @@ Tensor resample_bilinear(const Tensor &img, std::vector<int64_t> size, bool alig
 
   auto output = Tensor::create({ output_height , output_width , channel }, img.element_type());
 
-  if (x.element_type().is<float>()) {
+  if (img.element_type().is<float>()) {
     resample_bilinear_impl(
       img.eigen_device().get(),
       img.data<float>(),
@@ -247,7 +249,8 @@ Tensor resample_bilinear(const Tensor &img, std::vector<int64_t> size, bool alig
       output_width,
       channel,
       align_corners);
-  } else if (x.element_type().is<uint8_t>()) {
+  } else
+    if (img.element_type().is<uint8_t>()) {
     resample_bilinear_impl(
       img.eigen_device().get(),
       img.data<uint8_t>(),
@@ -259,8 +262,10 @@ Tensor resample_bilinear(const Tensor &img, std::vector<int64_t> size, bool alig
       channel,
       align_corners);
   } else {
-    RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
+    RUNTIME_ERROR("element type:" << img.element_type().name() << " not support!");
   }
+
+  return output;
 }
 
 

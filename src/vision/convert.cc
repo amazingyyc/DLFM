@@ -19,7 +19,7 @@ void convert_block_impl(
       T *y_offset = y + h * width * y_channel + w * y_channel;
 
       for (int64_t c = 0; c < y_channel; ++c) {
-        y_offset[c] = x_offset[idx[c]];
+        y_offset[c] = x_offset[idxs[c]];
       }
     }
   }
@@ -100,16 +100,20 @@ Tensor convert(const Tensor &x, std::vector<size_t> idx) {
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }
+
+  return y;
 }
 
-Tensor BGRA_2_RGB(const Tensor &x) {
-  ARGUMENT_CHECK(4 == x.shape().ndims(), "x ndims must be 4");
+Tensor bgra_2_rgb(const Tensor &x) {
+  ARGUMENT_CHECK(3 == x.shape().ndims(), "x ndims must be 3");
+  ARGUMENT_CHECK(4 == x.shape()[2], "last dimension must be 4");
 
   return convert(x, {2, 1, 0});
 }
 
-Tensor BGRA_2_RGBA(const Tensor &x) {
-  ARGUMENT_CHECK(4 == x.shape().ndims(), "x ndims must be 4");
+Tensor bgra_2_rgba(const Tensor &x) {
+  ARGUMENT_CHECK(3 == x.shape().ndims(), "x ndims must be 3");
+  ARGUMENT_CHECK(4 == x.shape()[2], "last dimension must be 4");
 
   return convert(x, { 2, 1, 0, 3 });
 }
