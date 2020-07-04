@@ -51,6 +51,7 @@ void crop_impl(
     device->eigen_device()->enqueue_with_barrier(
       &barrier,
       &crop_block_impl<T>,
+      device,
       x,
       y,
       input_height,
@@ -119,6 +120,8 @@ Tensor crop(const Tensor &x, std::vector<int64_t> offset, std::vector<int64_t> s
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }
+
+  return y;
 }
 
 }

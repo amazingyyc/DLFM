@@ -1,9 +1,9 @@
 #ifndef VISION_PAD_H
 #define VISION_PAD_H
 
-#include "basic.h"
-#include "element_type.h"
-#include "tensor.h"
+#include "common/basic.h"
+#include "common/element_type.h"
+#include "common/tensor.h"
 
 namespace dlfm::vision {
 

@@ -7,7 +7,7 @@ void pad_block_impl(
   std::shared_ptr<Device> device,
   T *x,
   T *y,
-  T *value
+  T *value,
   int64_t input_height,
   int64_t input_width,
   int64_t output_height,
@@ -24,7 +24,7 @@ void pad_block_impl(
   for (int64_t idx = start_index; idx < end_index; ++idx) {
     if (idx < top || idx >= (top + input_height)) {
       // Top/bottom pad
-      T *y_offset = y + idx * output_height * channel;
+      T *y_offset = y + idx * output_width * channel;
       for (int64_t j = 0; j < output_width; ++j) {
         device->memcpy(y_offset, value, channel_bytes);
 
@@ -32,7 +32,7 @@ void pad_block_impl(
       }
     } else {
       // left
-      T *y_offset = y + idx * output_height * channel;
+      T *y_offset = y + idx * output_width * channel;
       T *x_offset = x + (idx - top) * input_width * channel;
 
       for (int64_t j = 0; j < left; ++j) {
@@ -61,7 +61,7 @@ void pad_impl(
   std::shared_ptr<Device> device,
   T *x,
   T *y,
-  T *value
+  T *value,
   int64_t input_height,
   int64_t input_width,
   int64_t output_height,
@@ -84,6 +84,7 @@ void pad_impl(
     device->eigen_device()->enqueue_with_barrier(
       &barrier,
       &pad_block_impl<T>,
+      device,
       x,
       y,
       value,
@@ -151,10 +152,12 @@ Tensor pad(const Tensor &x, const Tensor &value, int64_t top, int64_t bottom, in
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }
+
+  return y;
 }
 
-Tensor pad(const Tensor &x, const Tensor &value, std::vector<int64_t> paddings) {
-  ARGUMENT_CHECK(4 == paddings.size(), "paddings size must be 4");
+Tensor pad(const Tensor &x, const Tensor &value, std::vector<int64_t> padding) {
+  ARGUMENT_CHECK(4 == padding.size(), "padding size must be 4");
 
   return pad(x, value, padding[0], padding[1], padding[2], padding[3]);
 }

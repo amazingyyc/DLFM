@@ -8,6 +8,7 @@
 #include "network/anime_face.h"
 #include "network/blaze_face.h"
 #include "vision/resample.h"
+#include "vision/pad.h"
 
 namespace dlfm {
 namespace test {
@@ -108,9 +109,15 @@ void blaze_face_test() {
 //  auto output = blaze_face.detect(input);
 //
 //  std::cout << output.size() << "\n";
-  auto x = Tensor::create({1280, 1024, 4}, ElementType::from<uint8_t>());
+//  auto x = Tensor::create({1280, 1024, 4}, ElementType::from<uint8_t>());
+//
+//  auto y = vision::resize(x, {128, 128});
 
-  auto y = vision::resize(x, {128, 128});
+  auto white = dlfm::Tensor::create({4}, dlfm::ElementType::from<uint8_t>());
+  white.fill(255);
+
+  auto x = Tensor::create({128, 101, 4}, ElementType::from<uint8_t>());
+  auto y = vision::pad(x, white, 0, 0, (128 - 101) / 2, (128 - 101) - (128 - 101) / 2);
 }
 
 }
