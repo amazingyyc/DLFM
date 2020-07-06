@@ -97,28 +97,30 @@ void relu6(const Tensor &x, Tensor &y) {
   }
 }
 
-void prelu_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float w, float *y, int64_t n) {
-  auto block = [](float *x, float w, float *y, int64_t n) {
-    int64_t limit = n / 4 * 4;
-    int64_t l = 0;
+//------------------------------------------------------------------------------------------------------
+// prelu
+void prelu_f32_block_impl(float *x, float w, float *y, int64_t n) {
+  int64_t limit = n / 4 * 4;
+  int64_t l = 0;
 
 #if defined(__ARM_NEON__)
-    float32x4_t zero = vdupq_n_f32(0);
-    float32x4_t wv = vdupq_n_f32(w);
+  float32x4_t zero = vdupq_n_f32(0);
+  float32x4_t wv = vdupq_n_f32(w);
 
-    for (; l < limit; l += 4) {
-      float32x4_t xv = vld1q_f32(x + l);
-      float32x4_t yv = vmaxq_f32(xv, zero) + vmulq_f32(wv, vminq_f32(zero, xv));
+  for (; l < limit; l += 4) {
+    float32x4_t xv = vld1q_f32(x + l);
+    float32x4_t yv = vmaxq_f32(xv, zero) + vmulq_f32(wv, vminq_f32(zero, xv));
 
-      vst1q_f32(y + l, yv);
-    }
+    vst1q_f32(y + l, yv);
+  }
 #endif
 
-    for (; l < n; ++l) {
-      y[l] = x[l] > 0 ? x[l] : w * x[l];
-    }
-  };
+  for (; l < n; ++l) {
+    y[l] = x[l] > 0 ? x[l] : w * x[l];
+  }
+}
 
+void prelu_f32_one_channel_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float w, float *y, int64_t n) {
   int64_t num_threads = (int64_t)eigen_device->numThreads();
   int64_t block_size = (n + num_threads - 1) / num_threads;
 
@@ -130,17 +132,61 @@ void prelu_f32_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float w, fl
     int64_t start = i * block_size;
     int64_t real_block_size = (std::min)(block_size, n - start);
 
-    eigen_device->enqueue_with_barrier(&barrier, block, x + start, w, y + start, real_block_size);
+    eigen_device->enqueue_with_barrier(&barrier, &prelu_f32_block_impl, x + start, w, y + start, real_block_size);
+  }
+
+  barrier.Wait();
+}
+
+void prelu_f32_multi_channel_impl(
+        Eigen::ThreadPoolDevice *eigen_device,
+        float *x,
+        float *w,
+        float *y,
+        int64_t batch,
+        int64_t channel,
+        int64_t height,
+        int64_t width) {
+  Eigen::Barrier barrier((unsigned int)(batch * channel));
+
+  for (int64_t i = 0; i < batch; ++i) {
+    for (int64_t j = 0; j < channel; ++j) {
+      eigen_device->enqueue_with_barrier(
+              &barrier,
+              &prelu_f32_block_impl,
+              x + i * channel * height * width + j * height * width,
+              *(w + j),
+              y + i * channel * height * width + j * height * width,
+              height * width);
+    }
   }
 
   barrier.Wait();
 }
 
 void prelu(const Tensor &x, const Tensor &w, Tensor &y) {
-  ARGUMENT_CHECK(1 == w.size(), "weight's size must be 1");
+  ARGUMENT_CHECK(1 == w.size() || (1 == w.ndims() && x.shape()[1] == w.shape()[0]),
+          "weight's size must be 1 or equal to channel");
+
+  int64_t batch   = x.shape()[0];
+  int64_t channel = x.shape()[1];
+  int64_t height  = x.shape()[2];
+  int64_t width   = x.shape()[3];
 
   if (x.element_type().is<float>()) {
-    prelu_f32_impl(x.eigen_device().get(), x.data<float>(), w.data<float>()[0], y.data<float>(), x.size());
+    if (1 == w.size()) {
+      prelu_f32_one_channel_impl(x.eigen_device().get(), x.data<float>(), w.data<float>()[0], y.data<float>(), x.size());
+    } else {
+      prelu_f32_multi_channel_impl(
+              x.eigen_device().get(),
+              x.data<float>(),
+              w.data<float>(),
+              y.data<float>(),
+              batch,
+              channel,
+              height,
+              width);
+    }
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }

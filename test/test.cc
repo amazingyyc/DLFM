@@ -9,6 +9,8 @@
 #include "network/blaze_face.h"
 #include "vision/resample.h"
 #include "vision/pad.h"
+#include "network/pfld.h"
+#include "network/face_mesh.h"
 
 namespace dlfm {
 namespace test {
@@ -100,24 +102,16 @@ void srgan_test() {
 }
 
 void blaze_face_test() {
-//  nn::blaze_face::BlazeFace blaze_face;
-//  blaze_face.torch_name_scope("blazeface");
-//  blaze_face.load_torch_model("/Users/yanyuanchi/code/BlazeFace/dlfm");
-//
-//  auto input = Tensor::ones({1, 3, 128, 128});
-//
-//  auto output = blaze_face.detect(input);
-//
-//  std::cout << output.size() << "\n";
-//  auto x = Tensor::create({1280, 1024, 4}, ElementType::from<uint8_t>());
-//
-//  auto y = vision::resize(x, {128, 128});
+  nn::face_mesh::FaceMesh faceMesh;
+  faceMesh.torch_name_scope("facemesh");
+  faceMesh.load_torch_model("/Users/yanyuanchi/code/BlazeFace/facemesh/dlfm");
 
-  auto white = dlfm::Tensor::create({4}, dlfm::ElementType::from<uint8_t>());
-  white.fill(255);
+  auto input = Tensor::create({1, 3, 192, 192});
+  input.initialize_from_file("/Users/yanyuanchi/code/BlazeFace/facemesh/test_img.bin");
 
-  auto x = Tensor::create({128, 101, 4}, ElementType::from<uint8_t>());
-  auto y = vision::pad(x, white, 0, 0, (128 - 101) / 2, (128 - 101) - (128 - 101) / 2);
+  auto output = faceMesh(input);
+
+  std::cout << output << "\n";
 }
 
 }

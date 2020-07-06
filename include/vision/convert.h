@@ -14,6 +14,8 @@ Tensor bgra_2_rgb(const Tensor &x);
 
 Tensor bgra_2_rgba(const Tensor &x);
 
+Tensor rgbx_2_rgb(const Tensor &x);
+
 }
 
 #endif

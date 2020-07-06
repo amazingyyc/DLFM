@@ -11,3 +11,5 @@ namespace dlfm::vision {
 Tensor rotate_right_90(const Tensor &x);
 
 }
+
+#endif

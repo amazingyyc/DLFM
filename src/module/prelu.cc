@@ -2,8 +2,8 @@
 
 namespace dlfm::nn {
 
-PReluImpl::PReluImpl(bool in) : in_place(in) {
-  w = Tensor::create({ 1 });
+PReluImpl::PReluImpl(bool in, int64_t num_parameter) : in_place(in) {
+  w = Tensor::create({ num_parameter });
 }
 
 void PReluImpl::load_torch_model(std::string model_folder, std::string parent_name_scope) {
@@ -20,8 +20,8 @@ Tensor PReluImpl::forward(Tensor input) {
   return input.prelu(w, in_place);
 }
 
-PRelu prelu(bool in_place) {
-  return std::make_shared<PReluImpl>(in_place);
+PRelu prelu(bool in_place, int64_t num_parameter) {
+  return std::make_shared<PReluImpl>(in_place, num_parameter);
 }
 
 

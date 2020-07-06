@@ -118,4 +118,11 @@ Tensor bgra_2_rgba(const Tensor &x) {
   return convert(x, { 2, 1, 0, 3 });
 }
 
+Tensor rgbx_2_rgb(const Tensor &x) {
+  ARGUMENT_CHECK(3 == x.shape().ndims(), "x ndims must be 3");
+  ARGUMENT_CHECK(4 == x.shape()[2], "last dimension must be 4");
+
+  return convert(x, { 0, 1, 2 });
+}
+
 }

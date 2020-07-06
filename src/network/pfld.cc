@@ -77,6 +77,9 @@ PFLDInference::PFLDInference() {
 }
 
 Tensor PFLDInference::forward(Tensor x) {
+  ARGUMENT_CHECK(x.element_type().is<float>(), "x element type must be float");
+  ARGUMENT_CHECK(x.shape() == Shape({1, 3, 112, 112}), "x dimension must be (1, 3, 112, 112)")
+
   x = ((*bn1)((*conv1)(x))).relu(true);
   x = ((*bn2)((*conv2)(x))).relu(true);
 

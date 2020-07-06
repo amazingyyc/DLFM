@@ -67,6 +67,7 @@ Tensor rotate_right_90(const Tensor &x) {
 
   if (x.element_type().is<float>()) {
     rotate_right_90_impl(
+      x.device(),
       x.data<float>(),
       y.data<float>(),
       x_height,
@@ -75,6 +76,7 @@ Tensor rotate_right_90(const Tensor &x) {
     );
   } else if (x.element_type().is<uint8_t>()) {
     rotate_right_90_impl(
+      x.device(),
       x.data<uint8_t>(),
       y.data<uint8_t>(),
       x_height,
