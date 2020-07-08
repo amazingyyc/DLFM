@@ -249,8 +249,7 @@ Tensor resample_bilinear(const Tensor &img, std::vector<int64_t> size, bool alig
       output_width,
       channel,
       align_corners);
-  } else
-    if (img.element_type().is<uint8_t>()) {
+  } else if (img.element_type().is<uint8_t>()) {
     resample_bilinear_impl(
       img.eigen_device().get(),
       img.data<uint8_t>(),
