@@ -43,7 +43,6 @@ Tensor BlazeBlock::forward(Tensor x) {
   }
 
   return (*act)((*convs)(h) + x);
-
 }
 
 FaceMesh::FaceMesh() {

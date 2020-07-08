@@ -16,7 +16,7 @@ void rotate_right_90_block_impl(
 
   for (int64_t i = start; i < end; ++i) {
     for (int64_t j = 0; j < x_height; ++j) {
-      device->memcpy(y + i * x_height * channel + j * channel, x + j * x_width * channel + i * channel, bytes_count);
+      device->memcpy(y + i * x_height * channel + j * channel, x + (x_height - 1 - j) * x_width * channel + i * channel, bytes_count);
     }
   }
 }
@@ -86,12 +86,14 @@ Tensor rotate_right_90(const Tensor &x) {
   } else {
     RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
   }
+
+  return y;
 }
 
 //------------------------------------------------------
 // rotate
 inline bool valid_idx(int64_t start, int64_t end, int64_t idx) {
-  return (idx >= start) && (start < end);
+  return (idx >= start) && (idx < end);
 }
 
 template <typename T>
@@ -116,7 +118,7 @@ void rotate_block_impl(
 
   for (int64_t yh = start; yh < end; ++yh) {
     for (int64_t yw = 0; yw < width; ++yw) {
-      T *out = y + yh * height * channel + yw * channel;
+      T *out = y + yh * width * channel + yw * channel;
 
       float xw = m00 * yw + m01 * yh + m02;
       float xh = m10 * yw + m11 * yh + m12;
@@ -127,20 +129,23 @@ void rotate_block_impl(
       int64_t xh_t = floor(xh);
       int64_t xh_b = xh_t + 1;
 
-      if (!valid_idx(0, width, xw_l) && !valid_idx(0, width, xw_r) && !valid_idx(0, height, xh_t) && !valid_idx(0, height, xh_b)) {
-        device->memcpy(out, c, sizeof(T) * channel);
+      if (!valid_idx(0, width, xw_l) &&
+          !valid_idx(0, width, xw_r) &&
+          !valid_idx(0, height, xh_t) &&
+          !valid_idx(0, height, xh_b)) {
+        device->memcpy(out, pad, sizeof(T) * channel);
         continue;
       }
 
       float xw_l_factor = xw - xw_l;
-      float xw_r_factor = 1.0 - xw_l_factor;
+      float xw_r_factor = 1.0f - xw_l_factor;
 
       float xh_t_factor = xh - xh_t;
-      float xh_b_factor = 1.0 - xh_t_factor;
+      float xh_b_factor = 1.0f - xh_t_factor;
 
-      T *lef_top = (valid_idx(0, height, xh_t) && valid_idx(0, width, xw_l)) ? (x + xh_t * width * channel + xw_l * channel) : pad;
+      T *left_top = (valid_idx(0, height, xh_t) && valid_idx(0, width, xw_l)) ? (x + xh_t * width * channel + xw_l * channel) : pad;
       T *right_top = (valid_idx(0, height, xh_t) && valid_idx(0, width, xw_r)) ? (x + xh_t * width * channel + xw_r * channel) : pad;
-      T *lef_bottom = (valid_idx(0, height, xh_b) && valid_idx(0, width, xw_l)) ? (x + xh_b * width * channel + xw_l * channel) : pad;
+      T *left_bottom = (valid_idx(0, height, xh_b) && valid_idx(0, width, xw_l)) ? (x + xh_b * width * channel + xw_l * channel) : pad;
       T *right_bottom = (valid_idx(0, height, xh_b) && valid_idx(0, width, xw_r)) ? (x + xh_b * width * channel + xw_r * channel) : pad;
 
       for (int64_t c = 0; c < channel; ++c) {
@@ -180,7 +185,7 @@ void rotate_impl(
     int64_t start_index = i * block_size;
     int64_t end_index = std::min<int64_t>(start_index + block_size, height);
 
-    eigen_device->enqueue_with_barrier(
+    device->eigen_device()->enqueue_with_barrier(
       &barrier,
       &rotate_block_impl<T>,
       device,
@@ -193,6 +198,7 @@ void rotate_impl(
       m00,
       m01,
       m02,
+      m10,
       m11,
       m12,
       start_index,
@@ -210,22 +216,22 @@ Tensor rotate(const Tensor &x, float angle, const Tensor &pad) {
   int64_t width   = x.shape()[1];
   int64_t channel = x.shape()[2];
 
-  auto y = x.like();
+  auto y = Tensor::create(x.shape(), x.element_type());
 
   float cos_a = cos(angle);
   float sin_a = sin(angle);
 
   float m00 = cos_a;
-  float m01 = -sin_a;
-  float m02 = -(width / 2.0) * cos_a + (height / 2.0) * sin_a + width / 2.0;
+  float m01 = sin_a;
+  float m02 = -(float(width) / 2.0f) * cos_a - (float(height) / 2.0f) * sin_a + float(width) / 2.0f;
 
-  float m10 = sin_a;
+  float m10 = -sin_a;
   float m11 = cos_a;
-  float m12 = -(width / 2.0) * sin_a + (height / 2.0) * cos_a + height / 2.0;
+  float m12 = (float(width) / 2.0f) * sin_a - (float(height) / 2.0f) * cos_a + float(height) / 2.0f;
 
   if (x.element_type().is<float>()) {
     rotate_impl(
-      x.eigen_device().get(),
+      x.device(),
       x.data<float>(),
       y.data<float>(),
       pad.data<float>(),
@@ -240,7 +246,7 @@ Tensor rotate(const Tensor &x, float angle, const Tensor &pad) {
       m12);
   } else if (x.element_type().is<uint8_t>()) {
     rotate_impl(
-      x.eigen_device().get(),
+      x.device(),
       x.data<uint8_t>(),
       y.data<uint8_t>(),
       pad.data<uint8_t>(),

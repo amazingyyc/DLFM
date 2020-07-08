@@ -83,13 +83,17 @@ Tensor crop(const Tensor &x, std::vector<int64_t> offset, std::vector<int64_t> s
   int64_t output_width = size[1];
 
   ARGUMENT_CHECK(0 <= offset_y
-                 && offset_y < output_height
+                 && offset_y < input_height
                  && 0 <= offset_x
+                 && offset_x < input_width
                  && output_height > 0
                  && output_width > 0
-                 && offset_x < output_width
                  && offset_y + output_height <= input_height
-                 && offset_x + output_width <= input_width, "shape error");
+                 && offset_x + output_width <= input_width,
+                 "shape error, offset_y:" << offset_y
+                 << ",offset_x:" << offset_x
+                 << ",output_height:" << output_height
+                 << ",output_width" << output_width);
 
   auto y = Tensor::create({ output_height , output_width , channel }, x.element_type());
 
