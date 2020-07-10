@@ -17,8 +17,9 @@ Tensor rotate_right_90(const Tensor &x);
 // [     0,       0,                                1]
 Tensor rotate(const Tensor &x, float angle, const Tensor &pad);
 
-// rotate_v2 will not keep the reuslt size same with x.
-Tensor rotate_v2(const Tensor &x, float angle, const Tensor &pad)
+// Affine transform
+// matrix: [m00, m01, m02, m11, m11, m12]
+Tensor affine_transform(const Tensor &x, const std::vector<float> &matrix, const Tensor &pad);
 
 }
 

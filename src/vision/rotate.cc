@@ -266,4 +266,59 @@ Tensor rotate(const Tensor &x, float angle, const Tensor &pad) {
   return y;
 }
 
+Tensor affine_transform(const Tensor &x, const std::vector<float> &matrix, const Tensor &pad) {
+  ARGUMENT_CHECK(3 == x.shape().ndims(), "img dimension must be 3");
+  ARGUMENT_CHECK(x.shape()[2] == pad.shape()[0], "x pad channel must same");
+
+  int64_t height  = x.shape()[0];
+  int64_t width   = x.shape()[1];
+  int64_t channel = x.shape()[2];
+
+  auto y = Tensor::create(x.shape(), x.element_type());
+
+  float m00 = matrix[0];
+  float m01 = matrix[1];
+  float m02 = matrix[2];
+
+  float m10 = matrix[3];
+  float m11 = matrix[4];
+  float m12 = matrix[5];
+
+  if (x.element_type().is<float>()) {
+    rotate_impl(
+            x.device(),
+            x.data<float>(),
+            y.data<float>(),
+            pad.data<float>(),
+            height,
+            width,
+            channel,
+            m00,
+            m01,
+            m02,
+            m10,
+            m11,
+            m12);
+  } else if (x.element_type().is<uint8_t>()) {
+    rotate_impl(
+            x.device(),
+            x.data<uint8_t>(),
+            y.data<uint8_t>(),
+            pad.data<uint8_t>(),
+            height,
+            width,
+            channel,
+            m00,
+            m01,
+            m02,
+            m10,
+            m11,
+            m12);
+  } else {
+    RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
+  }
+
+  return y;
+}
+
 }
