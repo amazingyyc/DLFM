@@ -152,7 +152,7 @@ void yuv_2_rgb_full_uint8_impl(Eigen::ThreadPoolDevice *eigen_device, uint8_t *y
         uv_ptr  += 2 * (w % 2);
       }
     }
-  }
+  };
 
   int64_t num_threads = (int64_t)eigen_device->numThreads();
   int64_t block_size = (height + num_threads - 1) / num_threads;
@@ -187,18 +187,20 @@ Tensor yuv_2_rgb_full(const Tensor &y, const Tensor &uv) {
   int64_t height = y.shape()[0];
   int64_t width  = y.shape()[1];
 
-  ARGUMENT_CHECK(height == 2 * uv.shape()[0] && width == uv.shape()[1], "y/uv shape error");
+  ARGUMENT_CHECK(height == 2 * uv.shape()[0] && width == 2 * uv.shape()[1], "y/uv shape error");
 
   auto rgb = Tensor::create({height, width, 3}, y.element_type());
 
-  if (x.element_type().is<uint8_t>()) {
+  if (y.element_type().is<uint8_t>()) {
     yuv_2_rgb_full_uint8_impl(y.eigen_device().get(), y.data<uint8_t>(), uv.data<uint8_t>(), rgb.data<uint8_t>(), height, width);
   } else {
     RUNTIME_ERROR("element type:" << y.element_type().name() << " not support!");
   }
+
+  return rgb;
 }
 
-void yuv_2_rgb_full_video_impl(uint8_t *y, uint8_t *uv, uint8_t *rgb, int64_t height, int64_t width) {
+void yuv_2_rgb_video_uint8_impl(Eigen::ThreadPoolDevice *eigen_device, uint8_t *y, uint8_t *uv, uint8_t *rgb, int64_t height, int64_t width) {
   auto block = [](uint8_t *y, uint8_t *uv, uint8_t *rgb, int64_t height, int64_t width, int64_t start, int64_t end) {
     for (int64_t h = start; h < end; ++h) {
       uint8_t *rgb_ptr = rgb + h * width * 3;
@@ -223,7 +225,7 @@ void yuv_2_rgb_full_video_impl(uint8_t *y, uint8_t *uv, uint8_t *rgb, int64_t he
         uv_ptr  += 2 * (w % 2);
       }
     }
-  }
+  };
 
   int64_t num_threads = (int64_t)eigen_device->numThreads();
   int64_t block_size = (height + num_threads - 1) / num_threads;
@@ -258,15 +260,17 @@ Tensor yuv_2_rgb_video(const Tensor &y, const Tensor &uv) {
   int64_t height = y.shape()[0];
   int64_t width  = y.shape()[1];
 
-  ARGUMENT_CHECK(height == 2 * uv.shape()[0] && width == uv.shape()[1], "y/uv shape error");
+  ARGUMENT_CHECK(height == 2 * uv.shape()[0] && width == 2 * uv.shape()[1], "y/uv shape error");
 
   auto rgb = Tensor::create({height, width, 3}, y.element_type());
 
-  if (x.element_type().is<uint8_t>()) {
+  if (y.element_type().is<uint8_t>()) {
     yuv_2_rgb_video_uint8_impl(y.eigen_device().get(), y.data<uint8_t>(), uv.data<uint8_t>(), rgb.data<uint8_t>(), height, width);
   } else {
     RUNTIME_ERROR("element type:" << y.element_type().name() << " not support!");
   }
+
+  return rgb;
 }
 
 }
