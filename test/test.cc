@@ -11,6 +11,7 @@
 #include "vision/pad.h"
 #include "network/pfld.h"
 #include "network/face_mesh.h"
+#include "network/anime_face_tiny.h"
 
 namespace dlfm {
 namespace test {
@@ -112,6 +113,19 @@ void blaze_face_test() {
   auto output = faceMesh(input);
 
   std::cout << output << "\n";
+}
+
+void anime_face_tiny_test() {
+  nn::anime_face_tiny::AnimeFaceTiny anime_face_tiny(3, 3);
+  anime_face_tiny.torch_name_scope("anime_face_tiny");
+  anime_face_tiny.load_torch_model("/Users/yanyuanchi/code/UGATIT-pytorch/dlfm_tiny/cartoon_face_1");
+
+  auto input = Tensor::ones({1, 3, 256, 256});
+
+  // [1, 3, 256, 256]
+  auto output = anime_face_tiny(input);
+
+  std::cout << output[0][2][1];
 }
 
 }

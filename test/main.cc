@@ -29,7 +29,8 @@ int main() {
   //human_seg_test();
   //anime_face_test();
   // srgan_test();
-  blaze_face_test();
+  // blaze_face_test();
+  anime_face_tiny_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

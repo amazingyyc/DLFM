@@ -53,7 +53,7 @@ BlazeFace::BlazeFace() {
   y_scale = 128.0;
   h_scale = 128.0;
   w_scale = 128.0;
-  min_score_thresh = 0.85;
+  min_score_thresh = 0.90;
   min_suppression_threshold = 0.3;
 
   anchor = Tensor::create({num_anchors, 4});

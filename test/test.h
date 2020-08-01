@@ -20,6 +20,8 @@ void srgan_test();
 
 void blaze_face_test();
 
+void anime_face_tiny_test();
+
 }
 }
 
