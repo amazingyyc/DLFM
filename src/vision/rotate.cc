@@ -114,7 +114,7 @@ void rotate_block_impl(
   int64_t start,
   int64_t end) {
   float t_lowest = float(std::numeric_limits<T>::lowest());
-  float t_max = float(std::numeric_limits<T>::max());
+  float t_max = float((std::numeric_limits<T>::max)());
 
   for (int64_t yh = start; yh < end; ++yh) {
     for (int64_t yw = 0; yw < width; ++yw) {

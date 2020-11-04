@@ -183,6 +183,12 @@ class Tensor {
   // corresponding pytorch
   Tensor max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
 
+  // return max and indices
+  std::vector<Tensor> max_pooling2d_with_indices(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
+
+  // pytorch max_unpooling2d
+  Tensor max_unpooling2d(const Tensor &indices, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding);
+
   // kernel, stride, padding size both 2
   Tensor avg_pooling2d(size_t kernel_size, size_t stride, size_t padding = 0, bool ceil_mode = false);
   Tensor avg_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);

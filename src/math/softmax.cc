@@ -8,7 +8,7 @@ void softmax_3d_f32_vertical_impl(Eigen::ThreadPoolDevice *eigen_device, float *
     float *xptr = x;
     float *yptr = y;
 
-    float max_v = -std::numeric_limits<float>::max();
+    float max_v = -(std::numeric_limits<float>::max)();
 
     for (int64_t r = 0; r < row; ++r) {
       max_v = std::max<float>(max_v, xptr[0]);
@@ -59,7 +59,7 @@ void softmax_3d_f32_horizontal_impl(Eigen::ThreadPoolDevice *eigen_device, float
   auto block = [](float *x, float *y, int64_t row, int64_t col) {
     int64_t limit = col / 4 * 4;
 
-    float max_val = -std::numeric_limits<float>::max();
+    float max_val = -(std::numeric_limits<float>::max)();
     float e_sum_val = 0;
 
     {
@@ -81,7 +81,7 @@ void softmax_3d_f32_horizontal_impl(Eigen::ThreadPoolDevice *eigen_device, float
 #endif
 
       for (; c < col; ++c) {
-        max_val = std::max(x[c], max_val);
+        max_val = (std::max)(x[c], max_val);
       }
     }
 
@@ -154,7 +154,7 @@ void softmax_3d_f32_middle_impl(Eigen::ThreadPoolDevice *eigen_device, float *x,
     float *xptr = x;
     float *yptr = y;
 
-    float max_v = -std::numeric_limits<float>::max();
+    float max_v = -(std::numeric_limits<float>::max)();
     float e_sum_v = 0;
 
     for (int64_t d = 0; d < d1; ++d) {

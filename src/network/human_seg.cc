@@ -108,7 +108,7 @@ int64_t MobileNetV2::make_divisible(float v, int64_t divisor, int64_t min_value)
     min_value = divisor;
   }
 
-  int64_t new_v = std::max(min_value, int64_t(v + divisor / 2.f) / divisor * divisor);
+  int64_t new_v = (std::max)(min_value, int64_t(v + divisor / 2.f) / divisor * divisor);
 
   if (float(new_v) < 0.9f * v) {
     new_v += divisor;

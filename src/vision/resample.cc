@@ -146,7 +146,7 @@ void resample_bilinear_block_impl(
   bool align_corners) {
 
   float t_lowest = float(std::numeric_limits<T>::lowest());
-  float t_max = float(std::numeric_limits<T>::max());
+  float t_max = float((std::numeric_limits<T>::max)());
 
   for (int64_t o_y = start_index; o_y < end_index; ++o_y) {
     float i_y = cal_origin_index(input_height, output_height, o_y, align_corners);

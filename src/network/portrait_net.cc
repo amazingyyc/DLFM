@@ -169,8 +169,8 @@ MobileNetV2::MobileNetV2(
 }
 
 int64_t MobileNetV2::depth(int64_t channels) {
-  int64_t value = std::min(channels, min_channel);
-  return std::max(value, int64_t(channels * channel_ratio));
+  int64_t value = (std::min)(channels, min_channel);
+  return (std::max)(value, int64_t(channels * channel_ratio));
 }
 
 Sequential MobileNetV2::conv_bn(int64_t inp, int64_t oup, int64_t kernel, int64_t stride) {

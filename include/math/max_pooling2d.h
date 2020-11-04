@@ -7,6 +7,8 @@ namespace dlfm::math {
 
 void max_pooling2d(const Tensor&, Tensor&, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding);
 
+void max_pooling2d_with_indices(const Tensor &x, Tensor &y, Tensor &indices, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding);
+
 }
 
 #endif

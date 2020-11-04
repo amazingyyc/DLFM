@@ -14,6 +14,7 @@
 #include "math/cat.h"
 #include "math/conv_transpose2d.h"
 #include "math/max_pooling2d.h"
+#include "math/max_unpooling2d.h"
 #include "math/avg_pooling2d.h"
 #include "math/adaptive_avg_pooling2d.h"
 #include "math/adaptive_max_pooling2d.h"
@@ -945,6 +946,52 @@ Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t
   auto output = Tensor::create({ batch_size, channel, output_height, output_width }, element_type_);
 
   math::max_pooling2d(*this, output, kernel_size, stride, padding);
+
+  return output;
+}
+
+std::vector<Tensor> Tensor::max_pooling2d_with_indices(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {
+  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
+  ARGUMENT_CHECK(element_type_.is<float>(), "max pooling need float");
+
+  int64_t batch_size   = shape_[0];
+  int64_t channel      = shape_[1];
+  int64_t input_height = shape_[2];
+  int64_t input_width  = shape_[3];
+
+  int64_t output_height = (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1;
+  int64_t output_width = (input_width + 2 * padding[1] - kernel_size[1]) / stride[1] + 1;
+
+  if (ceil_mode) {
+    output_height = (int64_t)ceil(1.0 * (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1.0);
+    output_width  = (int64_t)ceil(1.0 * (input_width  + 2 * padding[1] - kernel_size[1]) / stride[1] + 1.0);
+  }
+
+  auto output = Tensor::create({ batch_size, channel, output_height, output_width }, element_type_);
+  auto indices = Tensor::create({ batch_size, channel, output_height, output_width }, ElementType::from<int64_t>());
+
+  math::max_pooling2d_with_indices(*this, output, indices, kernel_size, stride, padding);
+
+  return { output , indices };
+}
+
+
+Tensor Tensor::max_unpooling2d(const Tensor &indices, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding) {
+  ARGUMENT_CHECK(this->shape() == indices.shape(), "max_unpooling2d need shape same");
+  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
+  ARGUMENT_CHECK(element_type_.is<float>(), "max pooling need float");
+
+  int64_t batch_size = shape_[0];
+  int64_t channel = shape_[1];
+  int64_t input_height = shape_[2];
+  int64_t input_width = shape_[3];
+
+  int64_t output_height = (input_height - 1) * stride[0] - 2 * padding[0] + kernel_size[0];
+  int64_t output_width  = (input_width  - 1) * stride[1] - 2 * padding[1] - kernel_size[1];
+
+  auto output = Tensor::zeros({ batch_size, channel, output_height, output_width }, element_type_);
+
+  math::max_unpooling2d(*this, indices, output);
 
   return output;
 }

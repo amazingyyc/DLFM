@@ -16,7 +16,7 @@ public:
 
 public:
   void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
-  
+
   Tensor forward(Tensor) override;
 };
 
