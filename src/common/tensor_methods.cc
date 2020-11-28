@@ -32,6 +32,7 @@
 #include "math/var.h"
 #include "math/img_mask.h"
 #include "math/softmax.h"
+#include "math/norm2d.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -1282,6 +1283,16 @@ Tensor Tensor::img_mask(const Tensor &mask, const Tensor &val) {
   auto target = this->like();
 
   math::img_mask(*this, mask, val, target);
+
+  return target;
+}
+
+Tensor Tensor::norm2d(float eps = 1e-05) {
+  ARGUMENT_CHECK(2 == shape_.ndims(), "shape ndim must be 2");
+
+  auto target = this->like();
+
+  math::norm2d(*this, target, eps);
 
   return target;
 }

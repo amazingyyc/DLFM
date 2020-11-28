@@ -116,6 +116,7 @@ void instance_norm2d_f32_impl(
 
   barrier.Wait();
 }
+
 // instance norm2d need input is [b, c, h, w],
 void instance_norm2d(const Tensor &input, float eps, Tensor &output) {
   int64_t b = input.shape()[0];

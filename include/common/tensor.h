@@ -218,6 +218,8 @@ class Tensor {
 
   Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
 
+  Tensor norm2d(float eps = 1e-05);
+
   // special for img
   Tensor img_mask(const Tensor &mask, const Tensor &val);
 
