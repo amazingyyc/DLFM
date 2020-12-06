@@ -101,7 +101,7 @@ void norm2d_f32_impl(
   Eigen::Barrier barrier((unsigned int)(row));
 
   for (int64_t i = 0; i < row; ++i) {
-    eigen_device->enqueue_with_barrier(&barrier, &norm2d_f32_block_impl, x, y, eps, row, col);
+    eigen_device->enqueue_with_barrier(&barrier, &norm2d_f32_block_impl, x, y, eps, row, col, i);
   }
 
   barrier.Wait();

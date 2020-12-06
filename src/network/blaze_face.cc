@@ -89,11 +89,14 @@ BlazeFace::BlazeFace() {
   ADD_SUB_MODULE(regressor_16, conv2d, 96, 96, 1);
 }
 
-void BlazeFace::load_torch_model(std::string model_folder, std::string parent_name_scop) {
-  ModuleImpl::load_torch_model(model_folder, parent_name_scop);
+void BlazeFace::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  ModuleImpl::load_torch_model(tensor_map, parent_name_scope);
 
-  // load anchor
-  anchor.initialize_from_file(model_folder + FILE_SEP + torch_name_scope_ + ".anchors" + TORCH_MODEL_FILE_SUFFIX);
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
+
+  LOAD_TORCH_TENSOR(name_scope, "anchors", anchor, tensor_map)
 }
 
 // return shape: [num_anchors, 16]

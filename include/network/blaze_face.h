@@ -58,7 +58,10 @@ public:
   BlazeFace();
 
 public:
-  void load_torch_model(std::string model_folder, std::string parent_name_scop = "") override;
+  // load torch model
+  void load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope = "") override;
 
   // decode box, ref:https://github.com/hollance/BlazeFace-PyTorch
   Tensor decode_boxes(Tensor &raw_boxes, Tensor &anchors);

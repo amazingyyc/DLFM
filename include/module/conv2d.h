@@ -29,7 +29,9 @@ public:
       bool has_bias);
 
 public:
-  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+  virtual void load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scop) override;
 
   Tensor forward(Tensor) override;
 

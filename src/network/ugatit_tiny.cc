@@ -44,14 +44,12 @@ AdaILN::AdaILN(int64_t num_features, float e) {
   rho = Tensor::create({ 1, num_features, 1, 1 });
 }
 
-void AdaILN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void AdaILN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  rho.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "rho" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "rho", rho, tensor_map);
 
   one_sub_rho = (1.0 - rho);
 }

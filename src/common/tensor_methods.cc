@@ -54,6 +54,11 @@ Tensor Tensor::create(const Shape &shape, ElementType type) {
   return Tensor(storage, 0, shape, type);
 }
 
+//std::shared_ptr<TensorStorage>, , Shape, ElementType
+Tensor Tensor::create(std::shared_ptr<TensorStorage> storage, size_t offset, const Shape &shape, ElementType type) {
+  return Tensor(storage, offset, shape, type);
+}
+
 Tensor Tensor::create_from(void* ptr, const std::vector<int64_t> &dims, ElementType type) {
   Shape shape(dims);
 
@@ -1287,7 +1292,7 @@ Tensor Tensor::img_mask(const Tensor &mask, const Tensor &val) {
   return target;
 }
 
-Tensor Tensor::norm2d(float eps = 1e-05) {
+Tensor Tensor::norm2d(float eps) {
   ARGUMENT_CHECK(2 == shape_.ndims(), "shape ndim must be 2");
 
   auto target = this->like();

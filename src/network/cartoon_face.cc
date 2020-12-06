@@ -168,14 +168,12 @@ AdaLIN::AdaLIN(int64_t num_features, float e) {
   rho = Tensor::create({1, num_features, 1, 1});
 }
 
-void AdaLIN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void AdaLIN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  rho.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "rho" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "rho", rho, tensor_map);
 }
 
 Tensor AdaLIN::forward(std::vector<Tensor> x) {
@@ -233,15 +231,13 @@ SoftAdaLIN::SoftAdaLIN(int64_t num_features, float eps) {
   w_beta = Tensor::create({1, num_features});
 }
 
-void SoftAdaLIN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void SoftAdaLIN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  w_gamma.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "w_gamma" + TORCH_MODEL_FILE_SUFFIX);
-  w_beta.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "w_beta" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "w_gamma", w_gamma, tensor_map);
+  LOAD_TORCH_TENSOR(name_scope, "w_beta", w_beta, tensor_map);
 }
 
 Tensor SoftAdaLIN::forward(std::vector<Tensor> input) {
@@ -297,16 +293,14 @@ LIN::LIN(int64_t num_features, float e) {
   beta = Tensor::create({1, num_features, 1, 1});
 }
 
-void LIN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void LIN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  rho.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "rho" + TORCH_MODEL_FILE_SUFFIX);
-  gamma.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "gamma" + TORCH_MODEL_FILE_SUFFIX);
-  beta.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "beta" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "rho", rho, tensor_map);
+  LOAD_TORCH_TENSOR(name_scope, "gamma", gamma, tensor_map);
+  LOAD_TORCH_TENSOR(name_scope, "beta", beta, tensor_map);
 }
 
 Tensor LIN::forward(Tensor input) {

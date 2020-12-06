@@ -73,6 +73,8 @@ class Tensor {
 
   static Tensor create(const Shape &shape, ElementType type = ElementType::from<float>());
 
+  static Tensor create(std::shared_ptr<TensorStorage>, size_t, const Shape&, ElementType);
+
   static Tensor create_from(void *ptr, const std::vector<int64_t> &dims, ElementType type);
 
   static Tensor create_from(void *ptr, const Shape &shape, ElementType type);

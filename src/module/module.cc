@@ -18,15 +18,13 @@ void ModuleImpl::torch_name_scope(std::string name) {
   torch_name_scope_ = name;
 }
 
-void ModuleImpl::load_torch_model(std::string model_folder, std::string parent_name_scop) {
-  auto name_scope = parent_name_scop + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
-
-  if (parent_name_scop.empty()) {
-    name_scope = torch_name_scope_;
-  }
+void ModuleImpl::load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
   for (auto m : sub_modules()) {
-    m->load_torch_model(model_folder, name_scope);
+    m->load_torch_model(tensor_map, name_scope);
   }
 }
 

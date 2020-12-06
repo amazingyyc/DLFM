@@ -32,7 +32,9 @@ public:
   AdaILN(int64_t num_features, float eps=1e-5);
 
 public:
-  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+  void load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope) override;
 
   Tensor forward(std::vector<Tensor>) override;
 };
@@ -65,7 +67,9 @@ public:
   ILN(int64_t num_features, float eps=1e-5);
 
 public:
-  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+  void load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope) override;
 
   Tensor forward(Tensor) override;
 };
