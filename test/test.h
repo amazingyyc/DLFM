@@ -22,6 +22,8 @@ void blaze_face_test();
 
 void anime_face_tiny_test();
 
+void hair_seg_test();
+
 void deserialize_test();
 
 }

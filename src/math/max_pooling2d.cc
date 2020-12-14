@@ -20,19 +20,26 @@ void max_pooling2d_block_impl(
   int64_t pad_top,
   int64_t pad_left) {
   for (int64_t c = start_channel; c < end_channel; ++c) {
-    for (int64_t o_y = 0; o_y < output_height; ++o_y) {
-      for (int64_t o_x = 0; o_x < output_width; ++o_x) {
-        T max_val = T(0);
+    for (int64_t oy = 0; oy < output_height; ++oy) {
+      for (int64_t ox = 0; ox < output_width; ++ox) {
+        T max_val = std::numeric_limits<T>::lowest();
 
-        for (int64_t i_y = o_y * stride_y - pad_top; i_y < o_y * stride_y - pad_top + kernel_height; ++i_y) {
-          for (int64_t i_x = o_x * stride_x - pad_left; i_x < o_x * stride_x - pad_left + kernel_width; ++i_x) {
-            if (i_y >= 0 && i_y < input_height && i_x >= 0 && i_x < input_width) {
-              max_val = std::max<T>(max_val, input[c * input_height * input_width + i_y * input_width + i_x]);
-            }
+        int64_t iy_start = oy * stride_y - pad_top;
+        int64_t ix_start = ox * stride_x - pad_left;
+        int64_t iy_end = oy * stride_y - pad_top + kernel_height;
+        int64_t ix_end = ox * stride_x - pad_left + kernel_width;
+
+        if (iy_start < 0 || ix_start < 0 || iy_end > input_height || ix_end > input_width) {
+          max_val = 0;
+        }
+
+        for (int64_t iy = std::max<int64_t>(0, iy_start); iy < std::min(iy_end, input_height); ++iy) {
+          for (int64_t ix = std::max<int64_t>(0, ix_start); ix < std::min(ix_end, input_width); ++ix) {
+            max_val = std::max<T>(max_val, input[c * input_height * input_width + iy * input_width + ix]);
           }
         }
 
-        output[c * output_height * output_width + o_y * output_width + o_x] = max_val;
+        output[c * output_height * output_width + oy * output_width + ox] = max_val;
       }
     }
   }
@@ -127,22 +134,29 @@ void max_pooling2d_with_indices_block_impl(
   int64_t pad_top,
   int64_t pad_left) {
   for (int64_t c = start_channel; c < end_channel; ++c) {
-    for (int64_t o_y = 0; o_y < output_height; ++o_y) {
-      for (int64_t o_x = 0; o_x < output_width; ++o_x) {
-        T max_val = T(0);
-        int64_t max_idx = 0;
+    for (int64_t oy = 0; oy < output_height; ++oy) {
+      for (int64_t ox = 0; ox < output_width; ++ox) {
+        T max_val = std::numeric_limits<T>::lowest();
+        int64_t max_idx = -1;
 
-        for (int64_t i_y = o_y * stride_y - pad_top; i_y < o_y * stride_y - pad_top + kernel_height; ++i_y) {
-          for (int64_t i_x = o_x * stride_x - pad_left; i_x < o_x * stride_x - pad_left + kernel_width; ++i_x) {
-            if (i_y >= 0 && i_y < input_height && i_x >= 0 && i_x < input_width) {
-              max_val = std::max<T>(max_val, input[c * input_height * input_width + i_y * input_width + i_x]);
-              max_idx = i_y * input_width + i_x;
-            }
+        int64_t iy_start = oy * stride_y - pad_top;
+        int64_t ix_start = ox * stride_x - pad_left;
+        int64_t iy_end = oy * stride_y - pad_top + kernel_height;
+        int64_t ix_end = ox * stride_x - pad_left + kernel_width;
+
+        if (iy_start < 0 || ix_start < 0 || iy_end > input_height || ix_end > input_width) {
+          max_val = 0;
+        }
+
+        for (int64_t iy = std::max<int64_t>(0, iy_start); iy < std::min(iy_end, input_height); ++iy) {
+          for (int64_t ix = std::max<int64_t>(0, ix_start); ix < std::min(ix_end, input_width); ++ix) {
+            max_val = std::max<T>(max_val, input[c * input_height * input_width + iy * input_width + ix]);
+            max_idx = iy * input_width + ix;
           }
         }
 
-        output[c * output_height * output_width + o_y * output_width + o_x] = max_val;
-        indices[c * output_height * output_width + o_y * output_width + o_x] = max_idx;
+        output[c * output_height * output_width + oy * output_width + ox] = max_val;
+        indices[c * output_height * output_width + oy * output_width + ox] = max_idx;
       }
     }
   }

@@ -993,7 +993,7 @@ Tensor Tensor::max_unpooling2d(const Tensor &indices, std::vector<size_t> kernel
   int64_t input_width = shape_[3];
 
   int64_t output_height = (input_height - 1) * stride[0] - 2 * padding[0] + kernel_size[0];
-  int64_t output_width  = (input_width  - 1) * stride[1] - 2 * padding[1] - kernel_size[1];
+  int64_t output_width  = (input_width  - 1) * stride[1] - 2 * padding[1] + kernel_size[1];
 
   auto output = Tensor::zeros({ batch_size, channel, output_height, output_width }, element_type_);
 

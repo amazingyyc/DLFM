@@ -19,7 +19,7 @@ class DownBlock: public ModuleImpl {
 public:
   Sequential blocks;
 
-  PReLU active;
+  PRelu active;
 
 public:
   DownBlock(int64_t in_channel, int64_t mid_channel, int64_t out_channel);
@@ -141,3 +141,5 @@ public:
 
 
 }
+
+#endif

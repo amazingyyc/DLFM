@@ -12,6 +12,7 @@
 #include "network/pfld.h"
 #include "network/face_mesh.h"
 #include "network/anime_face_tiny.h"
+#include "network/hair_seg.h"
 #include "common/deserialize.h"
 
 namespace dlfm {
@@ -147,18 +148,27 @@ void deserialize_test() {
   model_deserialize.deserialize(tensor_map);
 }
 
+void hair_seg_test() {
+  nn::hair_seg::HairSeg hairseg(3, 1);
+
+  std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/hairseg/dlfm/hairseg.dlfm";
+  ModelDeserialize model_deserialize(path);
+
+  std::unordered_map<std::string, Tensor> tensor_map;
+  model_deserialize.deserialize(tensor_map);
+
+  hairseg.load_torch_model(tensor_map);
+
+  auto input = Tensor::ones({1, 3, 256, 256});
+
+  // [1, 3, 256, 256]
+  auto output = hairseg(input);
+
+   std::cout << output << "\n";
+   std::cout << output.sum() << "\n";
+}
+
 }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 

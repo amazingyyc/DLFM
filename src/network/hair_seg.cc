@@ -9,7 +9,7 @@ namespace dlfm::nn::hair_seg {
 
 DownBlock::DownBlock(int64_t in_channel, int64_t mid_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 1, 1, 0, 1, true),
+    conv2d(in_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, mid_channel, 3, 1, 1, mid_channel, true),
     conv2d(mid_channel, mid_channel, 1, 1, 0, 1, true),
@@ -32,7 +32,7 @@ Tensor DownBlock::forward(Tensor x) {
 DownMaxPool2dBlock::DownMaxPool2dBlock(int64_t in, int64_t mid, int64_t out)
   :in_channel(in), mid_channel(mid), out_channel(out) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 2, 2, 0, 1, true),
+    conv2d(in_channel, mid_channel, 2, 2, 0, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, mid_channel, 3, 1, 1, mid_channel, true),
     conv2d(mid_channel, mid_channel, 1, 1, 0, 1, true),
@@ -43,7 +43,7 @@ DownMaxPool2dBlock::DownMaxPool2dBlock(int64_t in, int64_t mid, int64_t out)
   });
 
   if (in_channel != out_channel) {
-    ADD_SUB_MODULE(conv, conv2d, in_channels, out_channel, 1, 1, 0, 1, true);
+    ADD_SUB_MODULE(conv, conv2d, in_channel, out_channel, 1, 1, 0, 1, true);
   }
 
   ADD_SUB_MODULE(active, prelu, true, out_channel);
@@ -62,20 +62,21 @@ std::vector<Tensor> DownMaxPool2dBlock::compute(Tensor x) {
   }
 
   y += max_pool2d_x;
+  y = (*active)(y);
 
-  return { (*active)(y), max_pool2d_x_indices };
+  return { y, max_pool2d_x_indices };
 }
 
 UpBlock::UpBlock(int64_t in_channel, int64_t mid_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 1, 1, 0, 1, true),
+    conv2d(in_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, mid_channel, 3, 1, 1, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, out_channel, 1, 1, 0, 1, true),
   });
 
-  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channel, 1, 1, 0, 1, true);
+  ADD_SUB_MODULE(conv, conv2d, in_channel, out_channel, 1, 1, 0, 1, true);
   ADD_SUB_MODULE(active, prelu, true, out_channel);
 }
 
@@ -88,14 +89,14 @@ Tensor UpBlock::forward(Tensor x) {
 
 UpMaxPool2dBlock::UpMaxPool2dBlock(int64_t in_channel, int64_t mid_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 1, 1, 0, 1, true),
+    conv2d(in_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
     conv_tranpose2d(mid_channel, mid_channel, 3, 2, 1, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, out_channel, 1, 1, 0, 1, true),
   });
 
-  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channel, 1, 1, 0, 1, true);
+  ADD_SUB_MODULE(conv, conv2d, in_channel, out_channel, 1, 1, 0, 1, true);
   ADD_SUB_MODULE(active, prelu, true, out_channel);
 }
 
@@ -114,7 +115,7 @@ Tensor UpMaxPool2dBlock::forward(std::vector<Tensor> inputs) {
 
 ResNetBlockV1::ResNetBlockV1(int64_t in_channel, int64_t mid_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 1, 1, 0, 1, true),
+    conv2d(in_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, mid_channel, 3, 1, 1, 1, true),
     prelu(true, mid_channel),
@@ -133,9 +134,9 @@ Tensor ResNetBlockV1::forward(Tensor x) {
 
 ResNetBlockV2::ResNetBlockV2(int64_t in_channel, int64_t mid_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channels, mid_channel, 1, 1, 0, 1, true),
+    conv2d(in_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
-    conv2d(mid_channel, mid_channel, 5, 1, 3, mid_channel, true),
+    conv2d(mid_channel, mid_channel, 5, 1, 2, mid_channel, true),
     conv2d(mid_channel, mid_channel, 1, 1, 0, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, in_channel, 1, 1, 0, 1, true),
@@ -144,7 +145,7 @@ ResNetBlockV2::ResNetBlockV2(int64_t in_channel, int64_t mid_channel) {
   ADD_SUB_MODULE(active, prelu, true, in_channel);
 }
 
-Tensor ResNetBlockV2::forward(Tensor) {
+Tensor ResNetBlockV2::forward(Tensor x) {
   auto y = (*blocks)(x);
   y += x;
 
@@ -153,7 +154,7 @@ Tensor ResNetBlockV2::forward(Tensor) {
 
 HairSeg::HairSeg(int64_t in_channel, int64_t out_channel) {
   ADD_SUB_MODULE(input_block, sequential, {
-    conv2d(in_channels, 8, 2, 2, 0, 1, true),
+    conv2d(in_channel, 8, 2, 2, 0, 1, true),
     prelu(true, 8),
     conv2d(8, 32, 2, 2, 0, 1, true),
     prelu(true, 32),
@@ -189,26 +190,31 @@ HairSeg::HairSeg(int64_t in_channel, int64_t out_channel) {
   ADD_SUB_MODULE(up_block2, std::make_shared<UpMaxPool2dBlock>, 128, 8, 64);
   ADD_SUB_MODULE(up_block3, std::make_shared<UpBlock>, 128, 4, 64);
   ADD_SUB_MODULE(up_block4, std::make_shared<UpMaxPool2dBlock>, 64, 4, 32);
-  ADD_SUB_MODULE(up_block4, std::make_shared<ResNetBlockV1>, 32, 4);
+  ADD_SUB_MODULE(up_block5, std::make_shared<ResNetBlockV1>, 32, 4);
 
   ADD_SUB_MODULE(output_block, sequential, {
     conv_tranpose2d(32, 8, 2, 2, 0, 0, true),
     prelu(true, 8),
-    conv_tranpose2d(8, out_channel, 2, 2, 0, 1, true),
+    conv_tranpose2d(8, out_channel, 2, 2, 0, 0, true),
   });
 }
 
 Tensor HairSeg::forward(Tensor x){
   x = (*input_block)(x);
 
-  auto down_block0_out = (*down_block0)(x);
+  auto down_block0_out = down_block0->compute(x);
   auto down_out0 = down_block0_out[0];
   auto indices0 = down_block0_out[1];
+
+
+  std::cout << down_out0 << '\n';
+  std::cout << down_out0.sum() << '\n';
+
 
   auto down_out1 = (*down_block1)(down_out0);
   auto down_out2 = (*down_block2)(down_out1);
 
-  auto down_block3_out = (*down_block3)(down_out2);
+  auto down_block3_out = down_block3->compute(down_out2);
   auto down_out3 = down_block3_out[0];
   auto indices3 = down_block3_out[1];
 
@@ -217,7 +223,7 @@ Tensor HairSeg::forward(Tensor x){
   down_out = (*down_block6)(down_out);
   down_out = (*down_block7)(down_out);
 
-  auto down_block8_out = (*down_block3)(down_out);
+  auto down_block8_out = down_block8->compute(down_out);
   auto down_out8 = down_block8_out[0];
   auto indices8 = down_block8_out[1];
 

@@ -22,16 +22,17 @@ int main() {
   // conv2d_test();
   // cartoon_transformer_test();
   // std_test();
-  //style_transformer_test();
+  // style_transformer_test();
   // var_test();
-  //selfie2anime_test();
+  // selfie2anime_test();
   //cartoon_face_test();
-  //human_seg_test();
-  anime_face_test();
+  // human_seg_test();
+  // anime_face_test();
   // srgan_test();
   // blaze_face_test();
   // anime_face_tiny_test();
   // deserialize_test();
+  hair_seg_test();
 
 #if defined(_MSC_VER)
   std::cin.get();
