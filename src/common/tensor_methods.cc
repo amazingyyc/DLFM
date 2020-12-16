@@ -1175,40 +1175,48 @@ Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
 }
 
 // conv2d
-Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups) {
+Tensor Tensor::conv2d(
+  const Tensor &weight,
+  const Tensor &bias,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &dilation,
+  size_t groups) {
   ARGUMENT_CHECK(groups >= 1, "groups must >= 1");
   ARGUMENT_CHECK(4 == shape_.ndims(), "conv2d need shape ndims is 4");
-  ARGUMENT_CHECK(0 == shape_[1] % groups, "input channel should be divided by groups");
+  ARGUMENT_CHECK(0 == shape_[1] % groups && 0 == (weight.shape_[0] % groups), "input/output channel should be divided by groups");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "weight ndims must be 4");
-  ARGUMENT_CHECK(0 == weight.shape_[0] % groups, "weight shape error");
   ARGUMENT_CHECK(shape_[1] / groups == weight.shape_[1], "weight shape error");
   ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "bias shape error");
+  ARGUMENT_CHECK(2 == stride.size() && stride[0] >= 1 && stride[1] >= 1, "stride error");
+  ARGUMENT_CHECK(2 == dilation.size() && dilation[0] >= 1 && dilation[1] >= 1, "stride error");
 
   int64_t batch = shape_[0];
-  int64_t input_height  = shape_[2];
-  int64_t input_width   = shape_[3];
+  int64_t in_height  = shape_[2];
+  int64_t in_width   = shape_[3];
 
   // weight [output_channel, input_channel, kernel_height, kernel_width]
-  int64_t output_channel = weight.shape_[0];
+  int64_t out_channel = weight.shape_[0];
   int64_t kernel_height  = weight.shape_[2];
   int64_t kernel_width   = weight.shape_[3];
 
-  int64_t output_height = (input_height + 2 * padding[0] - kernel_height) / stride[0] + 1;
-  int64_t output_width  = (input_width  + 2 * padding[1] - kernel_width)  / stride[1] + 1;
+  int64_t out_height = (in_height + 2 * padding[0] - dilation[0] * (kernel_height - 1) - 1) / stride[0] + 1;
+  int64_t out_width  = (in_width  + 2 * padding[1] - dilation[1] * (kernel_width  - 1) - 1) / stride[1] + 1;
 
-  auto output = Tensor::create({ batch, output_channel, output_height, output_width }, element_type_);
+  auto output = Tensor::create({ batch, out_channel, out_height, out_width }, element_type_);
 
-  math::conv2d(*this, weight, bias, output, stride, padding, groups);
+  math::conv2d(*this, weight, bias, output, stride, padding, dilation, groups);
 
   return output;
 }
 
 // transpose conv2d
-Tensor Tensor::conv_transpose2d(const Tensor &weight,
-                              const Tensor &bias,
-                              std::vector<size_t> stride,
-                              std::vector<size_t> padding,
-                              std::vector<size_t> out_padding) {
+Tensor Tensor::conv_transpose2d(
+  const Tensor &weight,
+  const Tensor &bias,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &out_padding) {
   ARGUMENT_CHECK(4 == shape_.ndims(), "shape error");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "shape error");
   ARGUMENT_CHECK(1 == bias.shape_.ndims(), "shape error");
@@ -1223,22 +1231,22 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
 
   int64_t out_channel = weight.shape_[1];
 
-  int64_t kernel_size_0 = weight.shape_[2];
-  int64_t kernel_size_1 = weight.shape_[3];
+  int64_t kernel_height = weight.shape_[2];
+  int64_t kernel_width = weight.shape_[3];
 
-  int64_t out_height = (in_height - 1) * stride[0] - 2 * padding[0] + kernel_size_0 + out_padding[0];
-  int64_t out_width  = (in_width  - 1) * stride[1] - 2 * padding[1] + kernel_size_1 + out_padding[1];
+  int64_t out_height = (in_height - 1) * stride[0] - 2 * padding[0] + kernel_height + out_padding[0];
+  int64_t out_width  = (in_width  - 1) * stride[1] - 2 * padding[1] + kernel_width + out_padding[1];
 
   auto output = Tensor::create({batch, out_channel, out_height, out_width}, element_type_);
 
-  math::conv_transpose2d(*this,
-                         weight,
-                         bias,
-                         output,
-                         {(size_t)kernel_size_0, (size_t)kernel_size_1},
-                         stride,
-                         padding,
-                         out_padding);
+  math::conv_transpose2d(
+    *this,
+    weight,
+    bias,
+    output,
+    stride,
+    padding,
+    out_padding);
 
   return output;
 }

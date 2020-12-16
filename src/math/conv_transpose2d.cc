@@ -132,14 +132,14 @@ void conv_transpose2d_impl(
   barrier.Wait();
 }
 
-void conv_transpose2d(const Tensor &input,
-                      const Tensor &weight,
-                      const Tensor &bias,
-                      Tensor &output,
-                      std::vector<size_t> kernel_size,
-                      std::vector<size_t> stride,
-                      std::vector<size_t> padding,
-                      std::vector<size_t> out_padding) {
+void conv_transpose2d(
+  const Tensor &input,
+  const Tensor &weight,
+  const Tensor &bias,
+  Tensor &output,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &out_padding) {
   // input [batch, input_channel, input_height, intput_width] (batch must be 1) -> [input_channel, input_height * intput_width ]
   // weight [input_channel, output_channel, kernel_height, kernel_width] -> [input_channel, output_channel * kernel_height * kernel_width]
   // input.t X weight -> [input_height * intput_width, output_channel * kernel_height * kernel_width]
@@ -155,13 +155,13 @@ void conv_transpose2d(const Tensor &input,
   auto output_height = output.shape()[2];
   auto output_width = output.shape()[3];
 
-  int64_t kernel_height = kernel_size[0];
-  int64_t kernel_width  = kernel_size[1];
+  int64_t kernel_height = weight.shape()[2];
+  int64_t kernel_width  = weight.shape()[3];
   int64_t stride_height = stride[0];
   int64_t stride_width  = stride[1];
 
-  int64_t pad_top  = kernel_size[0] - padding[0] - 1;
-  int64_t pad_left = kernel_size[1] - padding[1] - 1;
+  int64_t pad_top  = kernel_height - padding[0] - 1;
+  int64_t pad_left = kernel_width - padding[1] - 1;
 
   auto mat = input.reshape({ input_channel, input_height * input_width })
     .matmul(weight.reshape({ input_channel, output_channel * kernel_height * kernel_width }), true, false);

@@ -10,8 +10,9 @@ void conv2d(
   const Tensor &weight,
   const Tensor &bias,
   Tensor &output,
-  std::vector<size_t> stride,
-  std::vector<size_t> padding,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &dilation,
   size_t groups);
 
 }

@@ -210,10 +210,21 @@ class Tensor {
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
-  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups = 1);
+  Tensor conv2d(
+    const Tensor &weight,
+    const Tensor &bias,
+    const std::vector<size_t> &stride,
+    const std::vector<size_t> &padding,
+    const std::vector<size_t> &dilation,
+    size_t groups);
 
   // transpose conv2d
-  Tensor conv_transpose2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, std::vector<size_t> out_padding);
+  Tensor conv_transpose2d(
+    const Tensor &weight,
+    const Tensor &bias,
+    const std::vector<size_t> &stride,
+    const std::vector<size_t> &padding,
+    const std::vector<size_t> &out_padding);
 
   Tensor instance_norm2d(float eps = 1e-05);
   Tensor instance_norm2d(const Tensor &scale, const Tensor &shift, float eps = 1e-05);
