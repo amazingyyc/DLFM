@@ -8,9 +8,10 @@ Conv2dImpl::Conv2dImpl(
   std::vector<size_t> k,
   std::vector<size_t> s,
   std::vector<size_t> p,
+  std::vector<size_t> d,
   size_t g,
   bool has)
-  :kernel_size(k), stride(s), padding(p), groups(g), has_bias(has) {
+  :kernel_size(std::move(k)), stride(std::move(s)), padding(std::move(p)), dilation(std::move(d)), groups(g), has_bias(has) {
   ARGUMENT_CHECK(0 == in_channel % g && 0 == out_channel % g, "conv2d parameter error");
 
   weight = Tensor::create({ out_channel, in_channel / (int64_t)groups, (int64_t)kernel_size[0], (int64_t)kernel_size[1] });
@@ -32,7 +33,7 @@ void Conv2dImpl::load_torch_model(
 }
 
 Tensor Conv2dImpl::forward(Tensor input) {
-  return input.conv2d(weight, bias, stride, padding, groups);
+  return input.conv2d(weight, bias, stride, padding, dilation, groups);
 }
 
 Conv2d conv2d(
@@ -41,6 +42,7 @@ Conv2d conv2d(
   std::vector<size_t> kernel_size,
   std::vector<size_t> stride,
   std::vector<size_t> padding,
+  std::vector<size_t> dilation,
   size_t groups,
   bool has_bias) {
   return std::make_shared<Conv2dImpl>(
@@ -49,6 +51,7 @@ Conv2d conv2d(
     kernel_size,
     stride,
     padding,
+    dilation,
     groups,
     has_bias);
 }
@@ -59,6 +62,7 @@ Conv2d conv2d(
   size_t kernel_size,
   size_t stride,
   size_t padding,
+  size_t dilation,
   size_t groups,
   bool has_bias) {
   return conv2d(
@@ -67,6 +71,7 @@ Conv2d conv2d(
     { kernel_size, kernel_size },
     { stride , stride },
     { padding , padding },
+    { dilation , dilation },
     groups,
     has_bias);
 }

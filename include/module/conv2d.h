@@ -14,6 +14,7 @@ public:
   std::vector<size_t> kernel_size;
   std::vector<size_t> stride;
   std::vector<size_t> padding;
+  std::vector<size_t> dilation;
 
   size_t groups;
 
@@ -25,6 +26,7 @@ public:
       std::vector<size_t> kernel_size,
       std::vector<size_t> stride,
       std::vector<size_t> padding,
+      std::vector<size_t> dilation,
       size_t groups,
       bool has_bias);
 
@@ -45,16 +47,18 @@ Conv2d conv2d(
         std::vector<size_t> kernel_size,
         std::vector<size_t> stride,
         std::vector<size_t> padding,
-        size_t groups=1,
-        bool has_bias=true);
+        std::vector<size_t> dilation,
+        size_t groups,
+        bool has_bias);
 
 Conv2d conv2d(
   int64_t in_channel,
   int64_t out_channel,
   size_t kernel_size,
-  size_t stride = 1,
-  size_t padding = 0,
-  size_t groups=1,
+  size_t stride,
+  size_t padding,
+  size_t groups,
+  size_t dilation,
   bool has_bias = true);
 
 }

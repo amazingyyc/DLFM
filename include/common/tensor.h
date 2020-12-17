@@ -161,6 +161,9 @@ class Tensor {
 
   Tensor cast(ElementType to_type);
 
+  // slice on special axis.
+  Tensor slice(int64_t axis, int64_t offset, int64_t extent);
+
   Tensor slice(std::vector<int64_t> offsets, std::vector<int64_t> extents);
 
   Tensor reverse(std::vector<bool>);

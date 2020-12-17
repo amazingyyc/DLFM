@@ -772,6 +772,32 @@ Tensor Tensor::cast(ElementType to_type) {
   return target;
 }
 
+Tensor Tensor::slice(int64_t axis, int64_t offset, int64_t extent) {
+  int64_t ndims = shape_.ndims();
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+  ARGUMENT_CHECK(0 <= offset && offset < shape_[axis] && 0 < extent && offset + extent <= shape_[axis], "offset/extent error.");
+
+  std::vector<int64_t> offsets;
+  std::vector<int64_t> extents;
+
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i != axis) {
+      offsets.emplace_back(0);
+      extents.emplace_back(shape_[i]);
+    } else {
+      offsets.emplace_back(offset);
+      extents.emplace_back(extent);
+    }
+  }
+
+  auto target = Tensor::create(extents, element_type_);
+
+  math::slice(*this, target, offsets, extents);
+
+  return target;
+}
+
 Tensor Tensor::slice(std::vector<int64_t> offsets, std::vector<int64_t> extents) {
   auto ndims = this->shape().ndims();
 
