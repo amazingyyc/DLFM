@@ -12,9 +12,9 @@ TinyDown::TinyDown(int64_t in_channel, int64_t out_channel) {
   ARGUMENT_CHECK(out_channel == 2 * in_channel, "UNet Down need out_channel == 2 * in_channel");
 
   auto max_pooling2d_op = max_pooling2d({2, 2}, {2, 2}, {0, 0});
-  auto conv2d_op1 = conv2d(in_channel, out_channel, {3, 3}, {1, 1}, {1, 1});
+  auto conv2d_op1 = conv2d(in_channel, out_channel, 3, 1, 1, 1, 1, true);
   auto relu_op1   = relu(true);
-  auto conv2d_op2 = conv2d(out_channel, out_channel, {3, 3}, {1, 1}, {1, 1});
+  auto conv2d_op2 = conv2d(out_channel, out_channel, 3, 1, 1, 1, 1, true);
   auto relu_op2   = relu(true);
 
   ADD_SUB_MODULE(op, sequential, { max_pooling2d_op, conv2d_op1, relu_op1, conv2d_op2, relu_op2 });
@@ -29,9 +29,9 @@ TinyUp::TinyUp(int64_t in_channel, int64_t out_channel) {
 
   ADD_SUB_MODULE(up, conv_tranpose2d, in_channel, out_channel, 3, 2, 1, 1);
 
-  auto conv2d_op1 = conv2d(in_channel, out_channel, {3, 3}, {1, 1}, {1, 1});
+  auto conv2d_op1 = conv2d(in_channel, out_channel, 3, 1, 1, 1, 1, true);
   auto relu_op1   = relu(true);
-  auto conv2d_op2 = conv2d(out_channel, out_channel, {3, 3}, {1, 1}, {1, 1});
+  auto conv2d_op2 = conv2d(out_channel, out_channel, 3, 1, 1, 1, 1, true);
   auto relu_op2   = relu(true);
 
   ADD_SUB_MODULE(conv, sequential, { conv2d_op1, relu_op1, conv2d_op2, relu_op2 });
@@ -59,7 +59,7 @@ Tensor TinyUp::forward(std::vector<Tensor> inputs) {
 }
 
 TinyUNet::TinyUNet(int64_t in_channels, int64_t out_channels) {
-  ADD_SUB_MODULE(input, sequential, { conv2d(in_channels, 32, 3, 1, 1), relu(true) });
+  ADD_SUB_MODULE(input, sequential, { conv2d(in_channels, 32, 3, 1, 1, 1, 1, true), relu(true) });
 
   ADD_SUB_MODULE(down1, std::make_shared<TinyDown>, 32, 64);
   ADD_SUB_MODULE(down2, std::make_shared<TinyDown>, 64, 128);
@@ -71,7 +71,7 @@ TinyUNet::TinyUNet(int64_t in_channels, int64_t out_channels) {
   ADD_SUB_MODULE(up3, std::make_shared<TinyUp>, 128, 64);
   ADD_SUB_MODULE(up4, std::make_shared<TinyUp>, 64, 32);
 
-  ADD_SUB_MODULE(output, sequential, { conv2d(32, out_channels, 1), sigmoid(true) });
+  ADD_SUB_MODULE(output, sequential, { conv2d(32, out_channels, 1, 1, 0, 1, 1, true), sigmoid(true) });
 }
 
 Tensor TinyUNet::forward(Tensor x) {

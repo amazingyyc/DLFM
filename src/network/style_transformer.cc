@@ -15,7 +15,7 @@ ConvBlock::ConvBlock(
   upsample = will_upsample;
   relu = will_relu;
 
-  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channels, kernel_size, stride, kernel_size/2);
+  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channels, kernel_size, stride, kernel_size/2, 1, 1, true);
 
   if (will_normalize) {
     ADD_SUB_MODULE(norm, instance_norm2d, out_channels, 1e-05, true);

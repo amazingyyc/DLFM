@@ -23,8 +23,8 @@ BlazeBlock::BlazeBlock(int64_t in_channels, int64_t out_channels, int64_t kernel
   }
 
   ADD_SUB_MODULE(convs, sequential, {
-    conv2d(in_channels, in_channels, kernel_size, stride, padding, in_channels, true),
-    conv2d(in_channels, out_channels, 1, 1, 0, 1, true)});
+    conv2d(in_channels, in_channels, kernel_size, stride, padding, 1, in_channels, true),
+    conv2d(in_channels, out_channels, 1, 1, 0, 1, 1, true)});
 
   act = relu(true);
 }
@@ -59,7 +59,7 @@ BlazeFace::BlazeFace() {
   anchor = Tensor::create({num_anchors, 4});
 
   ADD_SUB_MODULE(backbone1, sequential, {
-    conv2d(3, 24, 5, 2, 0, 1, true),
+    conv2d(3, 24, 5, 2, 0, 1, 1, true),
     relu(true),
     std::make_shared<BlazeBlock>(24, 24),
     std::make_shared<BlazeBlock>(24, 28),
@@ -82,11 +82,11 @@ BlazeFace::BlazeFace() {
     std::make_shared<BlazeBlock>(96, 96),
   });
 
-  ADD_SUB_MODULE(classifier_8, conv2d, 88, 2, 1);
-  ADD_SUB_MODULE(classifier_16, conv2d, 96, 6, 1);
+  ADD_SUB_MODULE(classifier_8, conv2d, 88, 2, 1, 1, 0, 1, 1, true);
+  ADD_SUB_MODULE(classifier_16, conv2d, 96, 6, 1, 1, 0, 1, 1, true);
 
-  ADD_SUB_MODULE(regressor_8, conv2d, 88, 32, 1);
-  ADD_SUB_MODULE(regressor_16, conv2d, 96, 96, 1);
+  ADD_SUB_MODULE(regressor_8, conv2d, 88, 32, 1, 1, 0, 1, 1, true);
+  ADD_SUB_MODULE(regressor_16, conv2d, 96, 96, 1, 1, 0, 1, 1, true);
 }
 
 void BlazeFace::load_torch_model(

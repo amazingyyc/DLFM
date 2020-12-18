@@ -22,13 +22,13 @@ InvertedResidual::InvertedResidual(int64_t inp, int64_t oup, int64_t s, int64_t 
   use_res_connect = ((1 == stride) && (inp == oup));
 
   ADD_SUB_MODULE(conv, sequential, {
-    conv2d(inp, inp * expand_ratio, 1, 1, 0, 1, false),
+    conv2d(inp, inp * expand_ratio, 1, 1, 0, 1, 1, false),
     batch_norm2d(inp * expand_ratio, 1e-05, true),
     relu(true),
-    conv2d(inp * expand_ratio, inp * expand_ratio, 3, stride, 1, inp * expand_ratio, false),
+    conv2d(inp * expand_ratio, inp * expand_ratio, 3, stride, 1, 1, inp * expand_ratio, false),
     batch_norm2d(inp * expand_ratio, 1e-05, true),
     relu(true),
-    conv2d(inp * expand_ratio, oup, 1, 1, 0, 1, false),
+    conv2d(inp * expand_ratio, oup, 1, 1, 0, 1, 1, false),
     batch_norm2d(inp * expand_ratio, 1e-05, true),
   });
 }
@@ -44,16 +44,16 @@ Tensor InvertedResidual::forward(Tensor x) {
 ResidualBlock::ResidualBlock(int64_t inp, int64_t oup, int64_t stride) {
   ADD_SUB_MODULE(block, sequential, {
     conv_dw(inp, oup, 3, stride),
-    conv2d(oup, oup, 3, 1, 1, oup, false),
+    conv2d(oup, oup, 3, 1, 1, 1, oup, false),
     batch_norm2d(oup, 1e-05, true),
     relu(true),
-    conv2d(oup, oup, 1, 1, 0, 1, false),
+    conv2d(oup, oup, 1, 1, 0, 1, 1, false),
     batch_norm2d(oup, 1e-05, true),
   });
 
   if (inp != oup) {
     ADD_SUB_MODULE(residual, sequential, {
-      conv2d(inp, oup, 1, 1, 0, 1, false),
+      conv2d(inp, oup, 1, 1, 0, 1, 1, false),
       batch_norm2d(oup, 1e-05, true),
     });
   }
@@ -75,10 +75,10 @@ Tensor ResidualBlock::forward(Tensor x) {
 
 Sequential ResidualBlock::conv_dw(int64_t inp, int64_t oup, int64_t kernel, int64_t stride) {
   return sequential({
-    conv2d(inp, inp, kernel, stride, (kernel - 1) / 2, inp, false),
+    conv2d(inp, inp, kernel, stride, (kernel - 1) / 2, 1, inp, false),
     batch_norm2d(inp, 1e-05, true),
     relu(true),
-    conv2d(inp, oup, 1, 1, 0, 1, false),
+    conv2d(inp, oup, 1, 1, 0, 1, 1, false),
     batch_norm2d(oup, 1e-05, true),
     relu(true)
   });
@@ -161,10 +161,10 @@ MobileNetV2::MobileNetV2(
   ADD_SUB_MODULE(transit4, std::make_shared<ResidualBlock>, depth(24), depth(16));
   ADD_SUB_MODULE(transit5, std::make_shared<ResidualBlock>, depth(16), depth(8));
 
-  ADD_SUB_MODULE(pred, conv2d, depth(8), n_class, 3, 1, 1, 1, false);
+  ADD_SUB_MODULE(pred, conv2d, depth(8), n_class, 3, 1, 1, 1, 1, false);
 
   if (addEdge) {
-    ADD_SUB_MODULE(edge, conv2d, depth(8), n_class, 3, 1, 1, 1, false);
+    ADD_SUB_MODULE(edge, conv2d, depth(8), n_class, 3, 1, 1, 1, 1, false);
   }
 }
 
@@ -175,7 +175,7 @@ int64_t MobileNetV2::depth(int64_t channels) {
 
 Sequential MobileNetV2::conv_bn(int64_t inp, int64_t oup, int64_t kernel, int64_t stride) {
   return sequential({
-    conv2d(inp, oup, kernel, stride, (kernel - 1) / 2, 1, false),
+    conv2d(inp, oup, kernel, stride, (kernel - 1) / 2, 1, 1, false),
     batch_norm2d(oup, 1e-05, true),
     relu(true),
   });

@@ -8,9 +8,9 @@
 namespace dlfm::nn::srresnet {
 
 ResNet::ResNet(int64_t in_channels, int64_t out_channels, int64_t kernel_size, int64_t stride, int64_t padding) {
-  ADD_SUB_MODULE(conv1, conv2d, in_channels, out_channels, kernel_size, stride, padding);
+  ADD_SUB_MODULE(conv1, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, 1, true);
   ADD_SUB_MODULE(relu1, relu6, true);
-  ADD_SUB_MODULE(conv2, conv2d, in_channels, out_channels, kernel_size, stride, padding);
+  ADD_SUB_MODULE(conv2, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, 1, true);
   ADD_SUB_MODULE(relu2, relu6, true);
 }
 
@@ -26,7 +26,7 @@ Tensor ResNet::forward(Tensor x) {
 
 SRResNet::SRResNet(int64_t in_channels, int64_t out_channels) {
   ADD_SUB_MODULE(input, sequential, {
-    conv2d(in_channels, 32, 3, 1, 1),
+    conv2d(in_channels, 32, 3, 1, 1, 1, 1, true),
     relu6(true)
   });
 
@@ -34,7 +34,7 @@ SRResNet::SRResNet(int64_t in_channels, int64_t out_channels) {
   ADD_SUB_MODULE(res2, std::make_shared<ResNet>, 32, 32);
 
   ADD_SUB_MODULE(output, sequential, {
-    conv2d(32, out_channels, 3, 1, 1),
+    conv2d(32, out_channels, 3, 1, 1, 1, 1, true),
     tanh(true)
   });
 }

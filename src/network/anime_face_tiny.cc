@@ -13,7 +13,7 @@ namespace dlfm::nn::anime_face_tiny {
 
 DownBlock::DownBlock(int64_t in_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(in_channel, out_channel, 3, 2, 1, 1, false),
+    conv2d(in_channel, out_channel, 3, 2, 1, 1, 1, false),
     instance_norm2d(out_channel, 1e-05, false),
     relu(true)
   });
@@ -25,10 +25,10 @@ Tensor DownBlock::forward(Tensor x) {
 
 ResnetBlock::ResnetBlock(int64_t dim) {
   ADD_SUB_MODULE(blocks, sequential, {
-    conv2d(dim, dim, 3, 1, 1, dim, false),
+    conv2d(dim, dim, 3, 1, 1, 1, dim, false),
     instance_norm2d(dim, 1e-05, false),
     relu(true),
-    conv2d(dim, dim, 1, 1, 0, 1, false),
+    conv2d(dim, dim, 1, 1, 0, 1, 1, false),
     instance_norm2d(dim, 1e-05, false),
   });
 }
@@ -84,11 +84,11 @@ Tensor AdaILN::forward(std::vector<Tensor> x) {
 }
 
 ResnetAdaILNBlock::ResnetAdaILNBlock(int64_t dim) {
-  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 1, dim, false);
+  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 1, 1, dim, false);
   ADD_SUB_MODULE(norm1, std::make_shared<AdaILN>, dim);
   ADD_SUB_MODULE(relu1, relu, true);
 
-  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 1, 1, 0, 1, false);
+  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 1, 1, 0, 1, 1, false);
   ADD_SUB_MODULE(norm2, std::make_shared<AdaILN>, dim);
 }
 
@@ -109,7 +109,7 @@ Tensor ResnetAdaILNBlock::forward(std::vector<Tensor> input) {
 UpBlock::UpBlock(int64_t in_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
     upsample2d(2, "bilinear"),
-    conv2d(in_channel, out_channel, 3, 1, 1, 1, false),
+    conv2d(in_channel, out_channel, 3, 1, 1, 1, 1, false),
     instance_norm2d(out_channel, 1e-05, false),
     relu(true)
   });
@@ -124,7 +124,7 @@ AnimeFaceTiny::AnimeFaceTiny(int64_t in_channel, int64_t out_channel, int64_t ng
 
   std::vector<Module> DownBlockNodes;
 
-  DownBlockNodes.emplace_back(conv2d(in_channel, ngf, 7, 1, 3, 1, false));
+  DownBlockNodes.emplace_back(conv2d(in_channel, ngf, 7, 1, 3, 1, 1, false));
   DownBlockNodes.emplace_back(instance_norm2d(ngf, 1e-05, false));
   DownBlockNodes.emplace_back(std::make_shared<ReluImpl>(true));
 
@@ -146,7 +146,7 @@ AnimeFaceTiny::AnimeFaceTiny(int64_t in_channel, int64_t out_channel, int64_t ng
 
   ADD_SUB_MODULE(gap_fc, linear, ngf * mult, 1, false);
   ADD_SUB_MODULE(gmp_fc, linear, ngf * mult, 1, false);
-  ADD_SUB_MODULE(conv1x1, conv2d, ngf * mult * 2, ngf * mult, 1, 1, 0, 1, true);
+  ADD_SUB_MODULE(conv1x1, conv2d, ngf * mult * 2, ngf * mult, 1, 1, 0, 1, 1, true);
   ADD_SUB_MODULE(active, std::make_shared<ReluImpl>, true);
 
   ADD_SUB_MODULE(FC, sequential, {
@@ -175,7 +175,7 @@ AnimeFaceTiny::AnimeFaceTiny(int64_t in_channel, int64_t out_channel, int64_t ng
     UpBlock2Nodes.emplace_back(std::make_shared<UpBlock>(ngf * mult, ngf * mult / 2));
   }
 
-  UpBlock2Nodes.emplace_back(conv2d(ngf, out_channel, 7, 1, 3, 1, false));
+  UpBlock2Nodes.emplace_back(conv2d(ngf, out_channel, 7, 1, 3, 1, 1, false));
   UpBlock2Nodes.emplace_back(tanh(true));
 
   ADD_SUB_MODULE(UpBlock2, sequential, UpBlock2Nodes);

@@ -9,10 +9,10 @@ ResidualBlock::ResidualBlock(
   int64_t stride,
   int64_t padding,
   bool bias) {
-  ADD_SUB_MODULE(conv_1, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, false);
+  ADD_SUB_MODULE(conv_1, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, 1, false);
   ADD_SUB_MODULE(bn_1, batch_norm2d, out_channels, 1e-05, true, true);
   ADD_SUB_MODULE(relu, prelu, true);
-  ADD_SUB_MODULE(conv_1, conv2d, out_channels, out_channels, kernel_size, stride, padding, 1, false);
+  ADD_SUB_MODULE(conv_1, conv2d, out_channels, out_channels, kernel_size, stride, padding, 1, 1, false);
   ADD_SUB_MODULE(bn_1, batch_norm2d, out_channels, 1e-05, true, true);
 }
 
@@ -36,7 +36,7 @@ SubpixelBlock::SubpixelBlock(
   int64_t padding,
   bool bias,
   int64_t up): upscale_factor(up) {
-  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, bias);
+  ADD_SUB_MODULE(conv, conv2d, in_channels, out_channels, kernel_size, stride, padding, 1, 1, bias);
   ADD_SUB_MODULE(bn, batch_norm2d, in_channels, 1e-05, true, true);
   ADD_SUB_MODULE(relu, prelu, true);
 }
@@ -74,7 +74,7 @@ Generator::Generator(int64_t tag, int64_t residual_block_size, int64_t subpixel_
 
   ADD_SUB_MODULE(subpixel_layer, sequential, subpixel_layer_items);
 
-  ADD_SUB_MODULE(conv_1, conv2d, 64, 3, 9, 1, 4, 1, true);
+  ADD_SUB_MODULE(conv_1, conv2d, 64, 3, 9, 1, 4, 1, 1, true);
   ADD_SUB_MODULE(tanh_1, tanh, true);
 }
 

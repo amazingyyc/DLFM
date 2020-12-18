@@ -81,7 +81,7 @@ Conv2dBlock::Conv2dBlock(int64_t input_dim, int64_t output_dim,
     ARGUMENT_CHECK("none" == activation_type, "not supported activation_type:" << activation_type);
   }
 
-  ADD_SUB_MODULE(conv, conv2d, input_dim, output_dim, kernel_size, stride, 0);
+  ADD_SUB_MODULE(conv, conv2d, input_dim, output_dim, kernel_size, stride, 0, 1, 1, true);
 }
 
 Tensor Conv2dBlock::forward(Tensor x) {

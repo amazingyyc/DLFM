@@ -5,6 +5,7 @@
 #include "module/module.h"
 #include "module/sequential.h"
 #include "module/relu.h"
+#include "module/prelu.h"
 #include "module/conv2d.h"
 #include "module/instance_norm2d.h"
 #include "module/batch_norm2d.h"
@@ -89,7 +90,7 @@ public:
 
   Conv2d classifier;
 
-  PRelu prelu;
+  PRelu act;
 
   Sequential stage3_down;
   BatchNorm2d bn3;

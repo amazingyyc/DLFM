@@ -21,21 +21,21 @@ InvertedResidual::InvertedResidual(int64_t inp, int64_t oup, int64_t s, int64_t 
 
   if (1 == expansion) {
     ADD_SUB_MODULE(conv, sequential, {
-      conv2d(hidden_dim, hidden_dim, 3, stride, 1, hidden_dim, false),
+      conv2d(hidden_dim, hidden_dim, 3, stride, 1, 1, hidden_dim, false),
       batch_norm2d(hidden_dim, 1e-5),
       relu6(true),
-      conv2d(hidden_dim, oup, 1, 1, 0, 1, false),
+      conv2d(hidden_dim, oup, 1, 1, 0, 1, 1, false),
       batch_norm2d(oup, 1e-5)
     });
   } else {
     ADD_SUB_MODULE(conv, sequential, {
-      conv2d(inp, hidden_dim, 1, 1, 0, 1, false),
+      conv2d(inp, hidden_dim, 1, 1, 0, 1, 1, false),
       batch_norm2d(hidden_dim, 1e-5),
       relu6(true),
-      conv2d(hidden_dim, hidden_dim, 3, stride, 1, hidden_dim, false),
+      conv2d(hidden_dim, hidden_dim, 3, stride, 1, 1, hidden_dim, false),
       batch_norm2d(hidden_dim, 1e-5),
       relu6(true),
-      conv2d(hidden_dim, oup, 1, 1, 0, 1, false),
+      conv2d(hidden_dim, oup, 1, 1, 0, 1, 1, false),
       batch_norm2d(oup, 1e-5)
     });
   }
@@ -119,7 +119,7 @@ int64_t MobileNetV2::make_divisible(float v, int64_t divisor, int64_t min_value)
 
 Sequential MobileNetV2::conv_bn(int64_t inp, int64_t oup, int64_t stride) {
   return sequential({
-    conv2d(inp, oup, 3, stride, 1, 1, false),
+    conv2d(inp, oup, 3, stride, 1, 1, 1, false),
     batch_norm2d(oup, 1e-5),
     relu6(true)
   });
@@ -127,7 +127,7 @@ Sequential MobileNetV2::conv_bn(int64_t inp, int64_t oup, int64_t stride) {
 
 Sequential MobileNetV2::conv_1x1_bn(int64_t inp, int64_t oup) {
   return sequential({
-    conv2d(inp, oup, 1, 1, 0, 1, false),
+    conv2d(inp, oup, 1, 1, 0, 1, 1, false),
     batch_norm2d(oup, 1e-5),
     relu6(true)
   });
@@ -189,8 +189,8 @@ HumanSeg::HumanSeg(int64_t num_classes) {
   ADD_SUB_MODULE(decoder4, std::make_shared<DecoderBlock>, channel3, channel4, block_unit4);
 
   ADD_SUB_MODULE(conv_last, sequential, {
-    conv2d(channel4, 3, 3, 1, 1),
-    conv2d(3, num_classes, 3, 1, 1),
+    conv2d(channel4, 3, 3, 1, 1, 1, 1, true),
+    conv2d(3, num_classes, 3, 1, 1, 1, 1, true),
   });
 
   mean = Tensor::create({ 3 });

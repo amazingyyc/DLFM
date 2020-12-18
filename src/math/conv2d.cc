@@ -314,7 +314,7 @@ void conv2d_with_dilation_f32_block_impl(
         // Copy input to in_t;
         for (int64_t ic = 0; ic < in_channel; ++ic) {
           for (int64_t wy = 0, iy = oy * stride_y - padding_top; wy < kernel_height; ++wy, iy += dilation_y) {
-            for (int64_t wx = 0, ix = ox * stride_x - padding_left; wx < kernel_width; ++wx, ix + dilation_x) {
+            for (int64_t wx = 0, ix = ox * stride_x - padding_left; wx < kernel_width; ++wx, ix += dilation_x) {
               if (0 <= iy && iy < in_height && 0 <= ix && ix < in_width) {
                 mid[(ic * kernel_height + wy) * kernel_width + wx] = in[(ic * in_height + iy) * in_width + ix];
               } else {

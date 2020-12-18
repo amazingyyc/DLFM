@@ -8,7 +8,7 @@ namespace dlfm::nn::srgan {
 ConvolutionalBlock::ConvolutionalBlock(int64_t in_channels, int64_t out_channels, int64_t kernel_size, int64_t stride, bool batch_norm, const std::string& activation) {
   std::vector<Module> layers;
 
-  layers.emplace_back(conv2d(in_channels, out_channels, kernel_size, stride, kernel_size / 2));
+  layers.emplace_back(conv2d(in_channels, out_channels, kernel_size, stride, kernel_size / 2, 1, 1, true));
 
   if (batch_norm) {
     layers.emplace_back(batch_norm2d(out_channels));
@@ -32,7 +32,7 @@ Tensor ConvolutionalBlock::forward(Tensor x) {
 SubPixelConvolutionalBlock::SubPixelConvolutionalBlock(int64_t kernel_size, int64_t n_channels, int64_t scaling) {
   scaling_factor = scaling;
 
-  ADD_SUB_MODULE(conv, conv2d, n_channels, n_channels * scaling_factor * scaling_factor, kernel_size, 1, kernel_size / 2);
+  ADD_SUB_MODULE(conv, conv2d, n_channels, n_channels * scaling_factor * scaling_factor, kernel_size, 1, kernel_size / 2, 1, 1, true);
   ADD_SUB_MODULE(prelu, std::make_shared<PReluImpl>, true);
 }
 

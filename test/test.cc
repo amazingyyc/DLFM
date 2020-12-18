@@ -9,7 +9,6 @@
 #include "network/blaze_face.h"
 #include "vision/resample.h"
 #include "vision/pad.h"
-#include "network/pfld.h"
 #include "network/face_mesh.h"
 #include "network/anime_face_tiny.h"
 #include "network/hair_seg.h"

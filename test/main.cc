@@ -2,6 +2,7 @@
 
 #include "test.h"
 #include "mean_test.h"
+#include "conv2d_test.h"
 #include "selfie2anime_test.h"
 
 using namespace dlfm::test;

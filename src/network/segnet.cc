@@ -10,7 +10,7 @@ MakeDense::MakeDense(int64_t n_channels, int64_t growth_rate) {
 
 Tensor MakeDense::forward(Tensor x) {
   auto out = (*conv)(x);
-  out = (*bn)(y);
+  out = (*bn)(out);
   out = (*act)(out);
 
   return x.cat(out, 1);
@@ -38,7 +38,7 @@ ResidualDenseBlock::ResidualDenseBlock(int64_t n_in, int64_t s, bool a) {
   add = a;
 
   ADD_SUB_MODULE(conv, conv2d, n_in, n, 1, 1, 0, 1, 1, false);
-  ADD_SUB_MODULE(dense_block, std::maked_shared<DenseBlock>, n, (s - 1), n);
+  ADD_SUB_MODULE(dense_block, std::make_shared<DenseBlock>, n, (s - 1), n);
   ADD_SUB_MODULE(bn, batch_norm2d, n_in);
   ADD_SUB_MODULE(act, prelu, true, n_in);
 }
@@ -100,9 +100,9 @@ ERDSegNet::ERDSegNet(int64_t classes) {
 
   ADD_SUB_MODULE(classifier, conv2d, 192, classes, 1, 1, 0, 1, 1, false);
 
-  prelu = std::make_shared<PRelu>(true, classes);
-  sub_modules_.emplace_back(prelu);
-  prelu->torch_name_scope("prelu");
+  this->act = nn::prelu(true, classes);
+  sub_modules_.emplace_back(this->act);
+  this->act->torch_name_scope("prelu");
 
   ADD_SUB_MODULE(stage3_down, sequential, conv_bn_act(96, classes, 3, 1, 1));
   ADD_SUB_MODULE(bn3, batch_norm2d, classes);
@@ -125,14 +125,14 @@ std::vector<Module> ERDSegNet::conv_bn_act(int64_t inp, int64_t oup, int64_t ker
   return std::vector<Module>({
     conv2d(inp, oup, kernel_size, stride, padding, 1, 1, false),
     batch_norm2d(oup),
-    prelu(true, oup)
+    std::make_shared<PReluImpl>(true, oup)
   });
 }
 
 std::vector<Module> ERDSegNet::bn_act(int64_t inp) {
   return std::vector<Module>({
     batch_norm2d(inp),
-    prelu(true, inp)
+    std::make_shared<PReluImpl>(true, inp)
   });
 }
 
@@ -156,35 +156,35 @@ Tensor ERDSegNet::forward(Tensor input) {
 
   // ---------------
   auto s3_0 = (*down_3)((*ba_3)((input_cascade3.cat(s2_0, 1)).cat(s2, 1)));
-  auto s3 = self.stage_3(s3_0);
+  auto s3 = (*stage_3)(s3_0);
 
   // ---------------
   auto s4_0 = (*down_4)((*ba_4)((input_cascade4.cat(s3_0, 1)).cat(s3, 1)));
-  auto s4 = self.stage_4(s4_0);
+  auto s4 = (*stage_4)(s4_0);
 
   auto heatmap = (*classifier)(s4);
 
   auto heatmap_3 = heatmap.upsample2d(2, "bilinear");
-  auto s3_heatmap = (*prelu)((*bn3)((*stage3_down)(s3)));
+  auto s3_heatmap = (*act)((*bn3)((*stage3_down)(s3)));
   heatmap_3 += s3_heatmap;
   heatmap_3 = (*conv_3)(heatmap_3);
 
   auto heatmap_2 = heatmap_3.upsample2d(2, "bilinear");
-  auto s2_heatmap = (*prelu)((*bn2)((*stage2_down)(s2)));
+  auto s2_heatmap = (*act)((*bn2)((*stage2_down)(s2)));
   heatmap_2 += s2_heatmap;
   heatmap_2 = (*conv_2)(heatmap_2);
 
   auto heatmap_1 = heatmap_2.upsample2d(2, "bilinear");
-  auto s1_heatmap = (*prelu)((*bn1)((*stage1_down)(s1)));
+  auto s1_heatmap = (*act)((*bn1)((*stage1_down)(s1)));
   heatmap_1 += s1_heatmap;
   heatmap_1 = (*conv_1)(heatmap_1);
 
   auto heatmap_0 = heatmap_1.upsample2d(2, "bilinear");
-  auto s0_heatmap = (*prelu)((*bn0)((*stage0_down)(s0)));
+  auto s0_heatmap = (*act)((*bn0)((*stage0_down)(s0)));
   heatmap_0 += s0_heatmap;
   heatmap_0 = (*conv_0)(heatmap_0);
 
-  return heatmap_0.upsample2d(scale_factor = 2, mode = 'bilinear');
+  return heatmap_0.upsample2d(2, "bilinear");
 }
 
 SegMattingNet::SegMattingNet() {
@@ -196,7 +196,7 @@ SegMattingNet::SegMattingNet() {
 
 Tensor SegMattingNet::forward(Tensor x) {
   auto seg = (*seg_extract)(x);
-  auto seg_softmax = seg.sofmax(1);
+  auto seg_softmax = seg.softmax(1);
 
   auto bg = seg_softmax.slice(1, 0, 1);
   auto fg = seg_softmax.slice(1, 1, 1);
@@ -208,9 +208,9 @@ Tensor SegMattingNet::forward(Tensor x) {
   auto newconvF1 = (*bn)((*convF1)(conv_in)).relu(true);
   newconvF1 = (*convF2)(newconvF1);
 
-  auto a = newconvF2.slice(1, 0, 1);
-  auto b = newconvF2.slice(1, 1, 1);
-  auto c = newconvF2.slice(1, 2, 1);
+  auto a = newconvF1.slice(1, 0, 1);
+  auto b = newconvF1.slice(1, 1, 1);
+  auto c = newconvF1.slice(1, 2, 1);
 
   a *= fg;
   b *= bg;

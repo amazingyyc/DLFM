@@ -23,8 +23,8 @@ BlazeBlock::BlazeBlock(int64_t in_channels, int64_t out_channels, int64_t kernel
   }
 
   ADD_SUB_MODULE(convs, sequential, {
-    conv2d(in_channels, in_channels, kernel_size, stride, padding, in_channels, true),
-    conv2d(in_channels, out_channels, 1, 1, 0, 1, true)}
+    conv2d(in_channels, in_channels, kernel_size, stride, padding, 1, in_channels, true),
+    conv2d(in_channels, out_channels, 1, 1, 0, 1, 1, true)}
   );
 
   ADD_SUB_MODULE(act, prelu, true, out_channels);
@@ -47,7 +47,7 @@ Tensor BlazeBlock::forward(Tensor x) {
 
 FaceMesh::FaceMesh() {
   ADD_SUB_MODULE(backbone, sequential, {
-    conv2d(3, 16, 3, 2, 1, 1, true),
+    conv2d(3, 16, 3, 2, 1, 1, 1, true),
     prelu(true, 16),
 
     std::make_shared<BlazeBlock>(16, 16),
@@ -75,13 +75,13 @@ FaceMesh::FaceMesh() {
   });
 
   ADD_SUB_MODULE(conv, sequential, {
-    conv2d(128, 32, 1, 1, 0, 1, true),
+    conv2d(128, 32, 1, 1, 0, 1, 1, true),
     prelu(true, 32),
   });
 
   ADD_SUB_MODULE(block, std::make_shared<BlazeBlock>, 32, 32);
 
-  ADD_SUB_MODULE(pred, conv2d, 32, 1404, 3, 3, 0, 1, true);
+  ADD_SUB_MODULE(pred, conv2d, 32, 1404, 3, 3, 0, 1, 1, true);
 }
 
 Tensor FaceMesh::forward(Tensor x) {

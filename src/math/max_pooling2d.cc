@@ -150,8 +150,12 @@ void max_pooling2d_with_indices_block_impl(
 
         for (int64_t iy = std::max<int64_t>(0, iy_start); iy < std::min(iy_end, input_height); ++iy) {
           for (int64_t ix = std::max<int64_t>(0, ix_start); ix < std::min(ix_end, input_width); ++ix) {
-            max_val = std::max<T>(max_val, input[c * input_height * input_width + iy * input_width + ix]);
-            max_idx = iy * input_width + ix;
+            auto i_val = input[c * input_height * input_width + iy * input_width + ix];
+
+            if (i_val > max_val) {
+              max_val = i_val;
+              max_idx = iy * input_width + ix;
+            }
           }
         }
 
