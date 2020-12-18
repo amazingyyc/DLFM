@@ -5,13 +5,13 @@ namespace dlfm::nn {
 Conv2dImpl::Conv2dImpl(
   int64_t in_channel,
   int64_t out_channel,
-  std::vector<size_t> k,
-  std::vector<size_t> s,
-  std::vector<size_t> p,
-  std::vector<size_t> d,
+  const std::vector<size_t> &k,
+  const std::vector<size_t> &s,
+  const std::vector<size_t> &p,
+  const std::vector<size_t> &d,
   size_t g,
   bool has)
-  :kernel_size(std::move(k)), stride(std::move(s)), padding(std::move(p)), dilation(std::move(d)), groups(g), has_bias(has) {
+  :kernel_size(k), stride(s), padding(p), dilation(d), groups(g), has_bias(has) {
   ARGUMENT_CHECK(0 == in_channel % g && 0 == out_channel % g, "conv2d parameter error");
 
   weight = Tensor::create({ out_channel, in_channel / (int64_t)groups, (int64_t)kernel_size[0], (int64_t)kernel_size[1] });
@@ -39,10 +39,10 @@ Tensor Conv2dImpl::forward(Tensor input) {
 Conv2d conv2d(
   int64_t in_channel,
   int64_t out_channel,
-  std::vector<size_t> kernel_size,
-  std::vector<size_t> stride,
-  std::vector<size_t> padding,
-  std::vector<size_t> dilation,
+  const std::vector<size_t> &kernel_size,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &dilation,
   size_t groups,
   bool has_bias) {
   return std::make_shared<Conv2dImpl>(
