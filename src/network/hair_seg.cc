@@ -206,11 +206,6 @@ Tensor HairSeg::forward(Tensor x){
   auto down_out0 = down_block0_out[0];
   auto indices0 = down_block0_out[1];
 
-
-  std::cout << down_out0 << '\n';
-  std::cout << down_out0.sum() << '\n';
-
-
   auto down_out1 = (*down_block1)(down_out0);
   auto down_out2 = (*down_block2)(down_out1);
 
@@ -254,7 +249,7 @@ Tensor HairSeg::forward(Tensor x){
   auto up_4 = (*up_block4)({up_3, indices0});
   auto up_5 = (*up_block5)(up_4);
 
-  return (*output_block)(up_5);
+  return ((*output_block)(up_5)).sigmoid(true);
 }
 
 }
