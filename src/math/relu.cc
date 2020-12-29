@@ -139,26 +139,71 @@ void prelu_f32_one_channel_impl(Eigen::ThreadPoolDevice *eigen_device, float *x,
 }
 
 void prelu_f32_multi_channel_impl(
-        Eigen::ThreadPoolDevice *eigen_device,
-        float *x,
-        float *w,
-        float *y,
-        int64_t batch,
-        int64_t channel,
-        int64_t height,
-        int64_t width) {
-  Eigen::Barrier barrier((unsigned int)(batch * channel));
+  Eigen::ThreadPoolDevice *eigen_device,
+  float *x,
+  float *w,
+  float *y,
+  int64_t batch,
+  int64_t channel,
+  int64_t height,
+  int64_t width) {
 
-  for (int64_t i = 0; i < batch; ++i) {
-    for (int64_t j = 0; j < channel; ++j) {
-      eigen_device->enqueue_with_barrier(
-              &barrier,
-              &prelu_f32_block_impl,
-              x + i * channel * height * width + j * height * width,
-              *(w + j),
-              y + i * channel * height * width + j * height * width,
-              height * width);
+  // row = batch * channel
+  // col = height * width
+  auto block = [](float *x, float *w, float *y, int64_t row, int64_t col, int64_t channel, int64_t row_s, int64_t row_e) {
+    int64_t limit = col / 4 * 4;
+
+    for (int64_t r = row_s; r < row_e; ++r) {
+      float *xp = x + r * col;
+      float *yp = y + r * col;
+
+      float w_val = w[r % channel];
+
+      int64_t l = 0;
+
+#if defined(__ARM_NEON__)
+      float32x4_t zero = vdupq_n_f32(0);
+      float32x4_t wv = vdupq_n_f32(w_val);
+
+      for (; l < limit; l += 4) {
+        float32x4_t xv = vld1q_f32(xp + l);
+        float32x4_t yv = vmaxq_f32(xv, zero) + vmulq_f32(wv, vminq_f32(zero, xv));
+
+        vst1q_f32(yp + l, yv);
+      }
+#endif
+
+      for (; l < col; ++l) {
+        yp[l] = xp[l] > 0 ? xp[l] : w_val * xp[l];
+      }
     }
+  };
+
+  int64_t row = batch * channel;
+  int64_t col = height * width;
+
+  int64_t num_threads = (int64_t)eigen_device->numThreads();
+  int64_t block_size  = (row + num_threads - 1) / num_threads;
+
+  num_threads = (row + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t row_s = i * block_size;
+    int64_t row_e = std::min<int64_t>(row_s + block_size, row);
+
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      block,
+      x,
+      w,
+      y,
+      row,
+      col,
+      channel,
+      row_s,
+      row_e);
   }
 
   barrier.Wait();

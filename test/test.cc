@@ -148,7 +148,7 @@ void deserialize_test() {
 }
 
 void hair_seg_test() {
-  nn::hair_seg::HairSeg hairseg(3, 1);
+  nn::hair_seg::HairSeg hairseg(4, 2);
 
   std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/hairseg/dlfm/hairseg.dlfm";
   ModelDeserialize model_deserialize(path);
@@ -158,13 +158,15 @@ void hair_seg_test() {
 
   hairseg.load_torch_model(tensor_map);
 
-  auto input = Tensor::ones({1, 3, 256, 256});
+  auto input = Tensor::ones({1, 4, 256, 256});
 
   // [1, 3, 256, 256]
   auto output = hairseg(input);
 
-   std::cout << output << "\n";
-   std::cout << output.sum() << "\n";
+  output.softmax(1);
+
+  std::cout << output << "\n";
+  std::cout << output.sum() << "\n";
 }
 
 }

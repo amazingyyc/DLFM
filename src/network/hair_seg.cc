@@ -7,6 +7,13 @@
 
 namespace dlfm::nn::hair_seg {
 
+DummyPad::DummyPad(int64_t pad): pad_size(pad) {
+}
+
+Tensor DummyPad::forward(Tensor x) {
+  return x.pad({(size_t)pad_size, 0, (size_t)pad_size, 0});
+}
+
 DownBlock::DownBlock(int64_t in_channel, int64_t mid_channel, int64_t out_channel) {
   ADD_SUB_MODULE(blocks, sequential, {
     conv2d(in_channel, mid_channel, 1, 1, 0, 1, 1, true),
@@ -91,7 +98,8 @@ UpMaxPool2dBlock::UpMaxPool2dBlock(int64_t in_channel, int64_t mid_channel, int6
   ADD_SUB_MODULE(blocks, sequential, {
     conv2d(in_channel, mid_channel, 1, 1, 0, 1, 1, true),
     prelu(true, mid_channel),
-    conv_tranpose2d(mid_channel, mid_channel, 3, 2, 1, 1, true),
+    std::make_shared<DummyPad>(1),
+    conv_tranpose2d(mid_channel, mid_channel, 3, 2, 2, 1, true),
     prelu(true, mid_channel),
     conv2d(mid_channel, out_channel, 1, 1, 0, 1, 1, true),
   });
@@ -249,7 +257,7 @@ Tensor HairSeg::forward(Tensor x){
   auto up_4 = (*up_block4)({up_3, indices0});
   auto up_5 = (*up_block5)(up_4);
 
-  return ((*output_block)(up_5)).sigmoid(true);
+  return (*output_block)(up_5);
 }
 
 }

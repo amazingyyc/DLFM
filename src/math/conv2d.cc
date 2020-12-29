@@ -48,9 +48,9 @@ void conv2d_f32_stride1x1_group1_impl(
 
   // for save memory, when the input image is too big use gemm
   auto convolution_algorithm = nnp_convolution_algorithm_auto;
-  if (input_height * input_width * output_channel >= 512 * 512 * 64) {
-    convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
-  }
+  // if (input_height * input_width * output_channel >= 512 * 512 * 64) {
+  //   convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
+  // }
 
   auto nnp_status = nnp_convolution_output(
     convolution_algorithm,
@@ -113,9 +113,9 @@ void conv2d_f32_batch1_group1_impl(
 
   // for save memory, when the input image is too big use gemm
   auto convolution_algorithm = nnp_convolution_algorithm_auto;
-  if (input_height * input_width * output_channel >= 512 * 512 * 64) {
-    convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
-  }
+  // if (input_height * input_width * output_channel >= 512 * 512 * 64) {
+  //   convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
+  // }
 
   auto nnp_status = nnp_convolution_inference(
     convolution_algorithm,
@@ -185,9 +185,9 @@ void conv2d_f32_impl(
 
   // for save memory, when the input image is too big use gemm
   auto convolution_algorithm = nnp_convolution_algorithm_auto;
-  if (input_height * input_width * input_group_channel >= 512 * 512 * 64) {
-    convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
-  }
+  // if (input_height * input_width * input_group_channel >= 512 * 512 * 64) {
+  //   convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
+  // }
 
   Eigen::ThreadPoolDevice *eigen_device = output.eigen_device().get();
   Eigen::Barrier barrier((unsigned int)(batch * groups));

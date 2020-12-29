@@ -15,6 +15,16 @@
 
 namespace dlfm::nn::hair_seg {
 
+class DummyPad: public ModuleImpl {
+public:
+  int64_t pad_size;
+
+  DummyPad(int64_t pad);
+
+public:
+  Tensor forward(Tensor) override;
+};
+
 class DownBlock: public ModuleImpl {
 public:
   Sequential blocks;
