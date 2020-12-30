@@ -159,6 +159,8 @@ class Tensor {
 
   Tensor square(bool);
 
+  Tensor log(bool);
+
   Tensor cast(ElementType to_type);
 
   // slice on special axis.

@@ -33,6 +33,7 @@
 #include "math/img_mask.h"
 #include "math/softmax.h"
 #include "math/norm2d.h"
+#include "math/log.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -755,6 +756,20 @@ Tensor Tensor::square(bool in_place) {
     auto target = this->like();
 
     math::square(*this, target);
+
+    return target;
+  }
+}
+
+Tensor Tensor::log(bool in_place) {
+  if (in_place) {
+    math::log(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::log(*this, target);
 
     return target;
   }
