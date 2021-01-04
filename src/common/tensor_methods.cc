@@ -907,27 +907,58 @@ Tensor Tensor::reflection_pad2d(std::vector<size_t> paddings) {
   return target;
 }
 
-
 Tensor Tensor::cat(const Tensor &other, int64_t axis) {
-  ARGUMENT_CHECK(shape_.ndims() == other.ndims(), "cat need 2 tensor ndims same");
-  ARGUMENT_CHECK(0 <= axis && axis < other.ndims(), "axis out of range");
-  ARGUMENT_CHECK(element_type_ == other.element_type_, "element type must same");
+  std::vector<Tensor> others({ other });
+
+  return cat(others, axis);
+}
+
+Tensor Tensor::cat(const std::vector<Tensor> &others, int64_t axis) {
+  int64_t ndims = shape_.ndims();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+
+  for (auto &item : others) {
+    ARGUMENT_CHECK(element_type_ == item.element_type_, "element type must same");
+    ARGUMENT_CHECK(ndims == item.shape_.ndims(), "cat need tensor ndims same");
+
+    for (int64_t i = 0; i < ndims; ++i) {
+      if (i != axis) {
+        ARGUMENT_CHECK(shape_[i] == item.shape_[i], "shape error");
+      }
+    }
+  }
+
+  std::vector<Tensor> include_this;
+  include_this.emplace_back(*this);
+
+  for (auto &item : others) {
+    include_this.emplace_back(item);
+  }
 
   std::vector<int64_t> target_dims;
 
-  for (int64_t i = 0; i< shape_.ndims(); ++i) {
-    if (i == axis) {
-      target_dims.emplace_back(shape_[i] + other.shape_[i]);
-    } else {
-      ARGUMENT_CHECK(shape_[i] == other.shape_[i], "shape error");
-
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i != axis) {
       target_dims.emplace_back(shape_[i]);
+    } else {
+      int64_t total = 0;
+
+      for (auto &item : include_this) {
+        total += item.shape_[i];
+      }
+
+      target_dims.emplace_back(total);
     }
   }
 
   auto target = Tensor::create(target_dims, element_type_);
 
-  math::cat(*this, other, target, axis);
+  math::cat_v2(include_this, target, axis);
 
   return target;
 }

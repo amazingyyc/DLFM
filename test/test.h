@@ -26,6 +26,8 @@ void hair_seg_test();
 
 void deserialize_test();
 
+void segnet_test();
+
 }
 }
 

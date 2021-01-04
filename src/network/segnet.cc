@@ -58,7 +58,7 @@ InputProjection::InputProjection(int64_t s) : sampling_times(s) {
 }
 
 Tensor InputProjection::forward(Tensor x) {
-  auto y =x;
+  auto y = x;
 
   for (int64_t i = 0; i < sampling_times; ++i) {
     y = y.avg_pooling2d(3, 2, 1);
@@ -69,9 +69,9 @@ Tensor InputProjection::forward(Tensor x) {
 
 ERDSegNet::ERDSegNet(int64_t classes) {
   ADD_SUB_MODULE(cascade1, std::make_shared<InputProjection>, 1);
-  ADD_SUB_MODULE(cascade1, std::make_shared<InputProjection>, 2);
-  ADD_SUB_MODULE(cascade1, std::make_shared<InputProjection>, 3);
-  ADD_SUB_MODULE(cascade1, std::make_shared<InputProjection>, 4);
+  ADD_SUB_MODULE(cascade2, std::make_shared<InputProjection>, 2);
+  ADD_SUB_MODULE(cascade3, std::make_shared<InputProjection>, 3);
+  ADD_SUB_MODULE(cascade4, std::make_shared<InputProjection>, 4);
 
   ADD_SUB_MODULE(head_conv, sequential, conv_bn_act(3, 12, 3, 2, 1));
   ADD_SUB_MODULE(stage_0, std::make_shared<ResidualDenseBlock>, 12, 3, true);
@@ -136,6 +136,14 @@ std::vector<Module> ERDSegNet::bn_act(int64_t inp) {
   });
 }
 
+
+long long get_cur_microseconds() {
+  auto time_now = std::chrono::system_clock::now();
+  auto duration_in_ms = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch());
+  return duration_in_ms.count();
+}
+
+
 Tensor ERDSegNet::forward(Tensor input) {
   auto input_cascade1 = (*cascade1)(input);
   auto input_cascade2 = (*cascade2)(input);
@@ -147,19 +155,19 @@ Tensor ERDSegNet::forward(Tensor input) {
   auto s0 = (*stage_0)(x);
 
   // ---------------
-  auto s1_0 = (*down_1)((*ba_1)(input_cascade1.cat(s0, 1)));
+  auto s1_0 = (*down_1)((*ba_1)(input_cascade1.cat({s0}, 1)));
   auto s1 = (*stage_1)(s1_0);
 
   // ---------------
-  auto s2_0 = (*down_2)((*ba_2)((input_cascade2.cat(s1_0, 1)).cat(s1, 1)));
+  auto s2_0 = (*down_2)((*ba_2)(input_cascade2.cat({s1_0, s1}, 1)));
   auto s2 = (*stage_2)(s2_0);
 
   // ---------------
-  auto s3_0 = (*down_3)((*ba_3)((input_cascade3.cat(s2_0, 1)).cat(s2, 1)));
+  auto s3_0 = (*down_3)((*ba_3)(input_cascade3.cat({s2_0, s2}, 1)));
   auto s3 = (*stage_3)(s3_0);
 
   // ---------------
-  auto s4_0 = (*down_4)((*ba_4)((input_cascade4.cat(s3_0, 1)).cat(s3, 1)));
+  auto s4_0 = (*down_4)((*ba_4)(input_cascade4.cat({s3_0, s3}, 1)));
   auto s4 = (*stage_4)(s4_0);
 
   auto heatmap = (*classifier)(s4);
@@ -196,15 +204,17 @@ SegMattingNet::SegMattingNet() {
 
 Tensor SegMattingNet::forward(Tensor x) {
   auto seg = (*seg_extract)(x);
+
   auto seg_softmax = seg.softmax(1);
 
   auto bg = seg_softmax.slice(1, 0, 1);
   auto fg = seg_softmax.slice(1, 1, 1);
 
-  auto img_sqr = x * x;
+  auto img_sqr = x.square(false);
   auto img_masked = x * fg;
 
-  auto conv_in = x.cat(seg_softmax, 1).cat(img_sqr, 1).cat(img_masked, 1);
+  auto conv_in = x.cat({seg_softmax, img_sqr, img_masked}, 1);
+
   auto newconvF1 = (*bn)((*convF1)(conv_in)).relu(true);
   newconvF1 = (*convF2)(newconvF1);
 

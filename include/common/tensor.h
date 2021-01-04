@@ -180,6 +180,8 @@ class Tensor {
 
   Tensor cat(const Tensor &, int64_t axis);
 
+  Tensor cat(const std::vector<Tensor> &others, int64_t axis);
+
   // (this - mean) / std
   Tensor normalize(Tensor mean, Tensor std, bool in_place=false);
 

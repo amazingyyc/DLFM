@@ -193,6 +193,11 @@ bool inline ModelDeserialize::deserialize<std::unordered_map<std::string, Tensor
       return false;
     }
 
+    if (tensor.element_type().is<float16>()) {
+      // convert float16 to float
+      tensor = tensor.cast(ElementType::from<float>());
+    }
+
     tensor_map.insert(std::make_pair(name, tensor));
   }
 

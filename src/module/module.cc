@@ -29,15 +29,15 @@ void ModuleImpl::load_torch_model(
 }
 
 std::vector<Module> ModuleImpl::sub_modules() {
-  return sub_modules_;;
+  return sub_modules_;
 }
 
 Tensor ModuleImpl::operator()(Tensor input) {
-  return this->forward(std::move(input));
+  return this->forward(input);
 }
 
 Tensor ModuleImpl::operator()(std::vector<Tensor> inputs) {
-  return this->forward(std::move(inputs));
+  return this->forward(inputs);
 }
 
 
