@@ -34,7 +34,9 @@ int main() {
   // anime_face_tiny_test();
   // deserialize_test();
   // hair_seg_test();
-  segnet_test();
+  // segnet_test();
+  // pfld_test();
+  slim_test();
 
 #if defined(_MSC_VER)
   std::cin.get();

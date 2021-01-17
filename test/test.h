@@ -28,6 +28,10 @@ void deserialize_test();
 
 void segnet_test();
 
+void pfld_test();
+
+void slim_test();
+
 }
 }
 

@@ -50,8 +50,15 @@ public:
   virtual Tensor forward(std::vector<Tensor>);
 
 public:
+
+  Tensor operator()(Tensor);
+
+  Tensor operator()(std::vector<Tensor>);
+
   // special function for pytorch
   void torch_name_scope(std::string name);
+
+  void load_torch_model(const std::string &file_path, const std::string &name_scope="");
 
   // load torch model
   virtual void load_torch_model(
@@ -59,10 +66,6 @@ public:
     std::string parent_name_scope = "");
 
   virtual std::vector<std::shared_ptr<ModuleImpl>> sub_modules();
-
-  Tensor operator()(Tensor);
-
-  Tensor operator()(std::vector<Tensor>);
 
 };
 

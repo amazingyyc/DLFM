@@ -166,6 +166,10 @@ void conv2d_f32_impl(
   input_size.width  = (size_t)input_width;
   input_size.height = (size_t)input_height;
 
+  struct nnp_size output_size;
+  output_size.width  = (size_t)output_width;
+  output_size.height = (size_t)output_height;
+
   struct nnp_padding input_padding;
   input_padding.top = padding[0];
   input_padding.right = padding[1];
@@ -189,8 +193,15 @@ void conv2d_f32_impl(
   //   convolution_algorithm = nnp_convolution_algorithm_implicit_gemm;
   // }
 
+  int64_t batch_x_groups = batch * groups;
+
+  int64_t num_threads = (int64_t)output.eigen_device()->numThreads();
+  int64_t block_size = (batch_x_groups + num_threads - 1) / num_threads;
+
+  num_threads = (batch_x_groups + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
   Eigen::ThreadPoolDevice *eigen_device = output.eigen_device().get();
-  Eigen::Barrier barrier((unsigned int)(batch * groups));
 
   auto block = [] (
     enum nnp_convolution_algorithm algorithm,
@@ -226,31 +237,100 @@ void conv2d_f32_impl(
       ARGUMENT_CHECK(nnp_status == nnp_status_success, "nnp_convolution_inference error:" << nnp_status);
   };
 
-  for (int64_t b_idx = 0; b_idx < batch; ++b_idx) {
-    for (int64_t g_idx = 0; g_idx < groups; ++g_idx) {
-      auto idx = b_idx * groups + g_idx;
+  auto block_v2 = [](
+    enum nnp_convolution_algorithm algorithm,
+    enum nnp_convolution_transform_strategy transform_strategy,
+    int64_t batch,
+    int64_t groups,
+    size_t input_group_channel,
+    size_t output_group_channel,
+    struct nnp_size input_size,
+    struct nnp_padding input_padding,
+    struct nnp_size kernel_size,
+    struct nnp_size output_subsampling,
+    struct nnp_size output_size,
+    const float *input,
+    const float *weight,
+    const float *bias,
+    float *output,
+    int64_t start,
+    int64_t end) {
+    for (int64_t idx = start; idx < end; ++idx) {
+      int64_t b_idx = idx / groups;
+      int64_t g_idx = idx % groups;
 
-      eigen_device->enqueue_with_barrier(
-        &barrier,
-        block,
-        convolution_algorithm,
-        nnp_convolution_transform_strategy_block_based,
+      auto nnp_status = nnp_convolution_inference(
+        algorithm,
+        transform_strategy,
         input_group_channel,
         output_group_channel,
         input_size,
         input_padding,
         kernel_size,
         output_subsampling,
-        input_ptr + idx * input_group_channel * input_height * input_width,
-        weight_ptr + g_idx * output_group_channel * input_group_channel * kernel_height * kernel_width,
-        bias_ptr + g_idx * output_group_channel,
-        output_ptr + idx * output_group_channel * output_height * output_width,
+        input + idx * input_group_channel * input_size.height * input_size.width,
+        weight + g_idx * output_group_channel * input_group_channel * kernel_size.height * kernel_size.width,
+        bias + g_idx * output_group_channel,
+        output + idx * output_group_channel * output_size.height * output_size.width,
         nullptr,
         nullptr);
+
+      ARGUMENT_CHECK(nnp_status == nnp_status_success, "nnp_convolution_inference error:" << nnp_status);
     }
+  };
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t start = i * block_size;
+    int64_t end = (std::min)(start + block_size, batch_x_groups);
+
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      block_v2,
+      convolution_algorithm,
+      nnp_convolution_transform_strategy_block_based,
+      batch,
+      groups,
+      input_group_channel,
+      output_group_channel,
+      input_size,
+      input_padding,
+      kernel_size,
+      output_subsampling,
+      output_size,
+      input_ptr,
+      weight_ptr,
+      bias_ptr,
+      output_ptr,
+      start,
+      end
+    );
   }
 
   barrier.Wait();
+
+  // for (int64_t b_idx = 0; b_idx < batch; ++b_idx) {
+  //   for (int64_t g_idx = 0; g_idx < groups; ++g_idx) {
+  //     auto idx = b_idx * groups + g_idx;
+
+  //     eigen_device->enqueue_with_barrier(
+  //       &barrier,
+  //       block,
+  //       convolution_algorithm,
+  //       nnp_convolution_transform_strategy_block_based,
+  //       input_group_channel,
+  //       output_group_channel,
+  //       input_size,
+  //       input_padding,
+  //       kernel_size,
+  //       output_subsampling,
+  //       input_ptr + idx * input_group_channel * input_height * input_width,
+  //       weight_ptr + g_idx * output_group_channel * input_group_channel * kernel_height * kernel_width,
+  //       bias_ptr + g_idx * output_group_channel,
+  //       output_ptr + idx * output_group_channel * output_height * output_width,
+  //       nullptr,
+  //       nullptr);
+  //   }
+  // }
 }
 
 #endif

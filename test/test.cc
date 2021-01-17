@@ -13,6 +13,8 @@
 #include "network/anime_face_tiny.h"
 #include "network/hair_seg.h"
 #include "network/segnet.h"
+#include "network/pfld.h"
+#include "network/slim.h"
 #include "common/deserialize.h"
 
 namespace dlfm {
@@ -185,6 +187,39 @@ void segnet_test() {
 
   // [1, 3, 256, 256]
   auto output = net(input);
+
+  std::cout << output << "\n";
+  std::cout << output.sum() << "\n";
+}
+
+void pfld_test() {
+  nn::pfld::PFLDInference net;
+
+  std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/pfld/dlfm/pfld.dlfm";
+  ModelDeserialize model_deserialize(path);
+
+  std::unordered_map<std::string, Tensor> tensor_map;
+  model_deserialize.deserialize(tensor_map);
+
+  net.load_torch_model(tensor_map);
+
+  auto input = Tensor::ones({1, 3, 112, 112});
+
+  auto output = net(input);
+
+  std::cout << output << "\n";
+  std::cout << output.sum() << "\n";
+}
+
+void slim_test() {
+  std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/slim/dlfm/slim.dlfm";
+
+  nn::slim::Slim slim;
+  slim.load_torch_model(path);
+
+  auto input = Tensor::ones({1, 3, 160, 160});
+
+  auto output = slim(input);
 
   std::cout << output << "\n";
   std::cout << output.sum() << "\n";
