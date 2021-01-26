@@ -4,14 +4,6 @@
 
 namespace dlfm::nn::h3r {
 
-
-long long get_cur_microseconds() {
-  auto time_now = std::chrono::system_clock::now();
-  auto duration_in_ms = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch());
-  return duration_in_ms.count();
-}
-
-
 Block::Block(int64_t in_channels, int64_t out_channels, int64_t expansion, int64_t stride) {
   if (1 == expansion) {
     ADD_SUB_MODULE(conv, sequential, {
@@ -206,8 +198,6 @@ FacialLandmarkDetector::FacialLandmarkDetector() {
 }
 
 Tensor FacialLandmarkDetector::forward(Tensor x) {
-  auto t1 = get_cur_microseconds();
-
   // x shape [128, 128, 3]
   x /= 255.0;
   x -= mean;
@@ -215,21 +205,9 @@ Tensor FacialLandmarkDetector::forward(Tensor x) {
 
   x = x.transpose({2, 0, 1}).reshape({1, 3, 128, 128});
 
-  auto t2 = get_cur_microseconds();
-
   auto y = (*backbone)(x);
 
-  auto t3 = get_cur_microseconds();
-
-  auto out = (*heatmap_head)(y);
-
-  auto t4 = get_cur_microseconds();
-
-  // std::cout << "t2-t1" << t2 - t1 << "\n";
-  // std::cout << "t3-t2" << t3 - t2 << "\n";
-  // std::cout << "t4-t3" << t4 - t3 << "\n";
-
-  return out;
+  return (*heatmap_head)(y);
 }
 
 }
