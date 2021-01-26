@@ -18,23 +18,19 @@ ConvTranpose2dImpl::ConvTranpose2dImpl(int64_t in_channel,
   bias_ = Tensor::create({ out_channel });
 }
 
-void ConvTranpose2dImpl::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void ConvTranpose2dImpl::load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  weight_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "weight" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "weight", weight_, tensor_map);
 
   if (has_bias_) {
-    bias_.initialize_from_file(
-            model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "bias" + TORCH_MODEL_FILE_SUFFIX);
+    LOAD_TORCH_TENSOR(name_scope, "bias", bias_, tensor_map);
   } else {
     bias_.fill(0);
   }
 }
-
 Tensor ConvTranpose2dImpl::forward(Tensor input) {
   return input.conv_transpose2d(weight_, bias_, stride_, padding_, out_padding_);
 }

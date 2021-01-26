@@ -52,5 +52,137 @@ void cat(const Tensor &x, const Tensor &y, Tensor &z, int64_t axis) {
   }
 }
 
+// x's shape: [m, k1, n] + [m, k2, n] ... [m, kt, n] => [m, sum(k1...kt), n]
+template <typename T>
+void cat_v2_impl(
+  std::shared_ptr<Device> device,
+  const std::vector<T*> &x,
+  T *y,
+  int64_t m,
+  const std::vector<int64_t> &k,
+  int64_t n,
+  int64_t k_total) {
+  auto block = [](
+    std::shared_ptr<Device> device,
+    const std::vector<T*> &x,
+    T *y,
+    int64_t m_start,
+    int64_t m_end,
+    const std::vector<int64_t> &k,
+    int64_t n,
+    int64_t k_total) {
+    for (int64_t m_idx = m_start; m_idx < m_end; ++m_idx) {
+      int64_t y_offset = m_idx * k_total * n;
+
+      for (int64_t i = 0; i < x.size(); ++i) {
+        int64_t cur_x_offset = m_idx * k[i] * n;
+        int64_t cur_x_lenght = k[i] * n;
+
+        device->memcpy(y + y_offset, x[i] + cur_x_offset, cur_x_lenght * sizeof(T));
+
+        y_offset += cur_x_lenght;
+      }
+    }
+  };
+
+  int64_t num_threads = (int64_t)device->eigen_device()->numThreads();
+  int64_t block_size = (m + num_threads - 1) / num_threads;
+
+  num_threads = (m + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t m_start = i * block_size;
+    int64_t m_end = (std::min)(m_start + block_size, m);
+
+    device->eigen_device()->enqueue_with_barrier(
+      &barrier,
+      block,
+      device,
+      x,
+      y,
+      m_start,
+      m_end,
+      k,
+      n,
+      k_total);
+  }
+
+  barrier.Wait();
+}
+
+void cat_v2(const std::vector<Tensor> &x, Tensor &y, int64_t axis) {
+  int64_t ndims = y.ndims();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+
+  int64_t m = 1;
+  std::vector<int64_t> k;
+  int64_t k_total = 0;
+  int64_t n = 1;
+
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i != axis) {
+      for (auto &item : x) {
+        ARGUMENT_CHECK(y.shape()[i] == item.shape()[i], "shape error");
+      }
+
+      if (i < axis) {
+        m *= y.shape()[i];
+      } else {
+        n *= y.shape()[i];
+      }
+    } else {
+      for (auto &item : x) {
+        k_total += item.shape()[i];
+        k.emplace_back(item.shape()[i]);
+      }
+    }
+  }
+
+  ARGUMENT_CHECK(k_total == y.shape()[axis], "shape error");
+
+  if (y.element_type().is<float>()) {
+    std::vector<float*> xptrs;
+    float *yptr = y.data<float>();
+
+    for (auto &item : x) {
+      xptrs.emplace_back(item.data<float>());
+    }
+
+    cat_v2_impl<float>(
+      y.device(),
+      xptrs,
+      yptr,
+      m,
+      k,
+      n,
+      k_total);
+  } else if (y.element_type().is<uint8_t>()) {
+    std::vector<uint8_t*> xptrs;
+    uint8_t *yptr = y.data<uint8_t>();
+
+    for (auto &item : x) {
+      xptrs.emplace_back(item.data<uint8_t>());
+    }
+
+    cat_v2_impl<uint8_t>(
+      y.device(),
+      xptrs,
+      yptr,
+      m,
+      k,
+      n,
+      k_total);
+  } else {
+    RUNTIME_ERROR("element type:" << y.element_type().name() << " not support!");
+  }
+}
+
 }
 }

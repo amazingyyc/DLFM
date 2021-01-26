@@ -18,7 +18,9 @@ public:
   LinearImpl(int64_t in_features, int64_t out_features, bool bias=true);
 
 public:
-  void load_torch_model(std::string model_folder, std::string parent_name_scope) override;
+  void load_torch_model(
+    const std::unordered_map<std::string, Tensor> &tensor_map,
+    std::string parent_name_scope) override;
 
   Tensor forward(Tensor) override;
 };

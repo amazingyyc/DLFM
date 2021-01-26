@@ -14,11 +14,11 @@ namespace dlfm::nn::anime_face {
 ResnetBlock::ResnetBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(conv_block, sequential, {
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, 1, use_bias),
     instance_norm2d(dim, 1e-05, false),
     relu(true),
     reflection_pad2d(1),
-    conv2d(dim, dim, 3, 1, 0, 1, use_bias),
+    conv2d(dim, dim, 3, 1, 0, 1, 1, use_bias),
     instance_norm2d(dim, 1e-05, false)
   });
 }
@@ -33,14 +33,12 @@ AdaILN::AdaILN(int64_t num_features, float e) {
   rho = Tensor::create({1, num_features, 1, 1});
 }
 
-void AdaILN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void AdaILN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  rho.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "rho" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "rho", rho, tensor_map);
 }
 
 Tensor AdaILN::forward(std::vector<Tensor> x) {
@@ -77,12 +75,12 @@ Tensor AdaILN::forward(std::vector<Tensor> x) {
 
 ResnetAdaILNBlock::ResnetAdaILNBlock(int64_t dim, bool use_bias) {
   ADD_SUB_MODULE(pad1, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
+  ADD_SUB_MODULE(conv1, conv2d, dim, dim, 3, 1, 0, 1, 1, use_bias);
   ADD_SUB_MODULE(norm1, std::make_shared<AdaILN>, dim);
   ADD_SUB_MODULE(relu1, relu, true);
 
   ADD_SUB_MODULE(pad2, reflection_pad2d, 1);
-  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, 1, use_bias);
+  ADD_SUB_MODULE(conv2, conv2d, dim, dim, 3, 1, 0, 1, 1, use_bias);
   ADD_SUB_MODULE(norm2, std::make_shared<AdaILN>, dim);
 }
 
@@ -110,16 +108,14 @@ ILN::ILN(int64_t num_features, float e) {
   beta = Tensor::create({1, num_features, 1, 1});
 }
 
-void ILN::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
+void ILN::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
-
-  rho.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "rho" + TORCH_MODEL_FILE_SUFFIX);
-  gamma.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "gamma" + TORCH_MODEL_FILE_SUFFIX);
-  beta.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "beta" + TORCH_MODEL_FILE_SUFFIX);
+  LOAD_TORCH_TENSOR(name_scope, "rho", rho, tensor_map);
+  LOAD_TORCH_TENSOR(name_scope, "gamma", gamma, tensor_map);
+  LOAD_TORCH_TENSOR(name_scope, "beta", beta, tensor_map);
 }
 
 Tensor ILN::forward(Tensor input) {
@@ -165,14 +161,14 @@ AnimeFace::AnimeFace(
   std::vector<Module> DownBlockNodes;
 
   DownBlockNodes.emplace_back(reflection_pad2d(3));
-  DownBlockNodes.emplace_back(conv2d(input_nc, ngf, 7, 1, 0, 1, false));
+  DownBlockNodes.emplace_back(conv2d(input_nc, ngf, 7, 1, 0, 1, 1, false));
   DownBlockNodes.emplace_back(instance_norm2d(ngf, 1e-05, false));
   DownBlockNodes.emplace_back(std::make_shared<ReluImpl>(true));
 
   int64_t mult = 1;
   for (int i = 0; i < 2; ++i) {
     DownBlockNodes.emplace_back(reflection_pad2d(1));
-    DownBlockNodes.emplace_back(conv2d(ngf * mult, ngf * mult * 2, 3, 2, 0, 1, false));
+    DownBlockNodes.emplace_back(conv2d(ngf * mult, ngf * mult * 2, 3, 2, 0, 1, 1, false));
     DownBlockNodes.emplace_back(instance_norm2d(ngf * mult * 2, 1e-05, false));
     DownBlockNodes.emplace_back(std::make_shared<ReluImpl>(true));
 
@@ -189,7 +185,7 @@ AnimeFace::AnimeFace(
 
   ADD_SUB_MODULE(gap_fc, linear, ngf * mult, 1, false);
   ADD_SUB_MODULE(gmp_fc, linear, ngf * mult, 1, false);
-  ADD_SUB_MODULE(conv1x1, conv2d, ngf * mult * 2, ngf * mult, 1, 1, 0, 1, true);
+  ADD_SUB_MODULE(conv1x1, conv2d, ngf * mult * 2, ngf * mult, 1, 1, 0, 1, 1, true);
   ADD_SUB_MODULE(relu, std::make_shared<ReluImpl>, true);
 
   if (light) {
@@ -226,7 +222,7 @@ AnimeFace::AnimeFace(
   for (int i = 0; i < 2; ++i) {
     UpBlock2Nodes.emplace_back(upsample2d(2, "nearest"));
     UpBlock2Nodes.emplace_back(reflection_pad2d(1));
-    UpBlock2Nodes.emplace_back(conv2d(ngf * mult, ngf * mult / 2, 3, 1, 0, 1, false));
+    UpBlock2Nodes.emplace_back(conv2d(ngf * mult, ngf * mult / 2, 3, 1, 0, 1, 1, false));
     UpBlock2Nodes.emplace_back(std::make_shared<ILN>(ngf * mult / 2));
     UpBlock2Nodes.emplace_back(std::make_shared<ReluImpl>(true));
 
@@ -234,7 +230,7 @@ AnimeFace::AnimeFace(
   }
 
   UpBlock2Nodes.emplace_back(reflection_pad2d(3));
-  UpBlock2Nodes.emplace_back(conv2d(ngf, output_nc, 7, 1, 0, 1, false));
+  UpBlock2Nodes.emplace_back(conv2d(ngf, output_nc, 7, 1, 0, 1, 1, false));
   UpBlock2Nodes.emplace_back(tanh(true));
 
   ADD_SUB_MODULE(UpBlock2, sequential, UpBlock2Nodes);

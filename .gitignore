@@ -5,3 +5,10 @@
 /deps
 /ios/dlfm
 .vs/
+/.DS_Store
+/.vscode
+/.idea
+/build
+/ios/build
+/ios/.DS_Store
+/third_party/.DS_Store

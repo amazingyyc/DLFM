@@ -14,6 +14,7 @@
 #include "math/cat.h"
 #include "math/conv_transpose2d.h"
 #include "math/max_pooling2d.h"
+#include "math/max_unpooling2d.h"
 #include "math/avg_pooling2d.h"
 #include "math/adaptive_avg_pooling2d.h"
 #include "math/adaptive_max_pooling2d.h"
@@ -31,6 +32,9 @@
 #include "math/var.h"
 #include "math/img_mask.h"
 #include "math/softmax.h"
+#include "math/norm2d.h"
+#include "math/log.h"
+#include "math/topk.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -50,6 +54,11 @@ Tensor Tensor::create(const Shape &shape, ElementType type) {
   auto storage = TensorStorage::create(shape.size() * type.byte_width());
 
   return Tensor(storage, 0, shape, type);
+}
+
+//std::shared_ptr<TensorStorage>, , Shape, ElementType
+Tensor Tensor::create(std::shared_ptr<TensorStorage> storage, size_t offset, const Shape &shape, ElementType type) {
+  return Tensor(storage, offset, shape, type);
 }
 
 Tensor Tensor::create_from(void* ptr, const std::vector<int64_t> &dims, ElementType type) {
@@ -337,6 +346,30 @@ Tensor Tensor::operator/(float value) {
   math::divide(*this, value, target);
 
   return target;
+}
+
+Tensor Tensor::floor_divide(float val, bool in_place) {
+  auto y = *this;
+
+  if (!in_place) {
+    y = like();
+  }
+
+  math::floor_divide(*this, y, val);
+
+  return y;
+}
+
+Tensor Tensor::remainder(float val, bool in_place) {
+  auto y = *this;
+
+  if (!in_place) {
+    y = like();
+  }
+
+  math::remainder(*this, y, val);
+
+  return y;
 }
 
 Tensor Tensor::operator[](int64_t idx) {
@@ -753,6 +786,20 @@ Tensor Tensor::square(bool in_place) {
   }
 }
 
+Tensor Tensor::log(bool in_place) {
+  if (in_place) {
+    math::log(*this, *this);
+
+    return *this;
+  } else {
+    auto target = this->like();
+
+    math::log(*this, target);
+
+    return target;
+  }
+}
+
 Tensor Tensor::cast(ElementType to_type) {
   if (element_type_ == to_type) {
     return *this;
@@ -761,6 +808,32 @@ Tensor Tensor::cast(ElementType to_type) {
   auto target = Tensor::create(shape_, to_type);
 
   math::cast(*this, target);
+
+  return target;
+}
+
+Tensor Tensor::slice(int64_t axis, int64_t offset, int64_t extent) {
+  int64_t ndims = shape_.ndims();
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+  ARGUMENT_CHECK(0 <= offset && offset < shape_[axis] && 0 < extent && offset + extent <= shape_[axis], "offset/extent error.");
+
+  std::vector<int64_t> offsets;
+  std::vector<int64_t> extents;
+
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i != axis) {
+      offsets.emplace_back(0);
+      extents.emplace_back(shape_[i]);
+    } else {
+      offsets.emplace_back(offset);
+      extents.emplace_back(extent);
+    }
+  }
+
+  auto target = Tensor::create(extents, element_type_);
+
+  math::slice(*this, target, offsets, extents);
 
   return target;
 }
@@ -859,27 +932,58 @@ Tensor Tensor::reflection_pad2d(std::vector<size_t> paddings) {
   return target;
 }
 
-
 Tensor Tensor::cat(const Tensor &other, int64_t axis) {
-  ARGUMENT_CHECK(shape_.ndims() == other.ndims(), "cat need 2 tensor ndims same");
-  ARGUMENT_CHECK(0 <= axis && axis < other.ndims(), "axis out of range");
-  ARGUMENT_CHECK(element_type_ == other.element_type_, "element type must same");
+  std::vector<Tensor> others({ other });
+
+  return cat(others, axis);
+}
+
+Tensor Tensor::cat(const std::vector<Tensor> &others, int64_t axis) {
+  int64_t ndims = shape_.ndims();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(0 <= axis && axis < ndims, "axis out of range");
+
+  for (auto &item : others) {
+    ARGUMENT_CHECK(element_type_ == item.element_type_, "element type must same");
+    ARGUMENT_CHECK(ndims == item.shape_.ndims(), "cat need tensor ndims same");
+
+    for (int64_t i = 0; i < ndims; ++i) {
+      if (i != axis) {
+        ARGUMENT_CHECK(shape_[i] == item.shape_[i], "shape error");
+      }
+    }
+  }
+
+  std::vector<Tensor> include_this;
+  include_this.emplace_back(*this);
+
+  for (auto &item : others) {
+    include_this.emplace_back(item);
+  }
 
   std::vector<int64_t> target_dims;
 
-  for (int64_t i = 0; i< shape_.ndims(); ++i) {
-    if (i == axis) {
-      target_dims.emplace_back(shape_[i] + other.shape_[i]);
-    } else {
-      ARGUMENT_CHECK(shape_[i] == other.shape_[i], "shape error");
-
+  for (int64_t i = 0; i < ndims; ++i) {
+    if (i != axis) {
       target_dims.emplace_back(shape_[i]);
+    } else {
+      int64_t total = 0;
+
+      for (auto &item : include_this) {
+        total += item.shape_[i];
+      }
+
+      target_dims.emplace_back(total);
     }
   }
 
   auto target = Tensor::create(target_dims, element_type_);
 
-  math::cat(*this, other, target, axis);
+  math::cat_v2(include_this, target, axis);
 
   return target;
 }
@@ -949,6 +1053,52 @@ Tensor Tensor::max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t
   return output;
 }
 
+std::vector<Tensor> Tensor::max_pooling2d_with_indices(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode) {
+  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
+  ARGUMENT_CHECK(element_type_.is<float>(), "max pooling need float");
+
+  int64_t batch_size   = shape_[0];
+  int64_t channel      = shape_[1];
+  int64_t input_height = shape_[2];
+  int64_t input_width  = shape_[3];
+
+  int64_t output_height = (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1;
+  int64_t output_width = (input_width + 2 * padding[1] - kernel_size[1]) / stride[1] + 1;
+
+  if (ceil_mode) {
+    output_height = (int64_t)ceil(1.0 * (input_height + 2 * padding[0] - kernel_size[0]) / stride[0] + 1.0);
+    output_width  = (int64_t)ceil(1.0 * (input_width  + 2 * padding[1] - kernel_size[1]) / stride[1] + 1.0);
+  }
+
+  auto output = Tensor::create({ batch_size, channel, output_height, output_width }, element_type_);
+  auto indices = Tensor::create({ batch_size, channel, output_height, output_width }, ElementType::from<int64_t>());
+
+  math::max_pooling2d_with_indices(*this, output, indices, kernel_size, stride, padding);
+
+  return { output , indices };
+}
+
+
+Tensor Tensor::max_unpooling2d(const Tensor &indices, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding) {
+  ARGUMENT_CHECK(this->shape() == indices.shape(), "max_unpooling2d need shape same");
+  ARGUMENT_CHECK(4 == shape_.ndims(), "max_pooling 4d tensor");
+  ARGUMENT_CHECK(element_type_.is<float>(), "max pooling need float");
+
+  int64_t batch_size = shape_[0];
+  int64_t channel = shape_[1];
+  int64_t input_height = shape_[2];
+  int64_t input_width = shape_[3];
+
+  int64_t output_height = (input_height - 1) * stride[0] - 2 * padding[0] + kernel_size[0];
+  int64_t output_width  = (input_width  - 1) * stride[1] - 2 * padding[1] + kernel_size[1];
+
+  auto output = Tensor::zeros({ batch_size, channel, output_height, output_width }, element_type_);
+
+  math::max_unpooling2d(*this, indices, output);
+
+  return output;
+}
+
 Tensor Tensor::avg_pooling2d(size_t kernel_size, size_t stride, size_t padding, bool ceil_mode) {
   return this->avg_pooling2d({kernel_size, kernel_size}, {stride, stride}, {padding, padding}, ceil_mode);
 }
@@ -985,7 +1135,7 @@ Tensor Tensor::adaptive_avg_pooling2d(std::vector<size_t> size) {
   ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_avg_pooling2d need ndims is 4");
 
   auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
-  
+
   math::adaptive_avg_pooling2d(*this, target);
 
   return target;
@@ -999,7 +1149,7 @@ Tensor Tensor::adaptive_max_pooling2d(std::vector<size_t> size) {
   ARGUMENT_CHECK(4 == this->shape().ndims(), "adaptive_max_pooling2d need ndims is 4");
 
   auto target = Tensor::create({shape_[0], shape_[1], (int64_t)size[0], (int64_t)size[1]}, element_type_);
-  
+
   math::adaptive_max_pooling2d(*this, target);
 
   return target;
@@ -1036,7 +1186,7 @@ Tensor Tensor::upsample2d(float scale_factor, std::string mode, bool align_corne
 
 Tensor Tensor::interpolate2d(std::vector<int64_t> size, std::string mode, bool align_corners) {
   ARGUMENT_CHECK(4 == this->shape_.rank(), "interpolate2d need rank is 4");
-  ARGUMENT_CHECK(size[0] > 0 && size[1] > 1, "size need > 0");
+  ARGUMENT_CHECK(size[0] > 0 && size[1] > 0, "size need > 0");
 
   if ("nearest" == mode) {
     ARGUMENT_CHECK(false == align_corners, "nearest mode only support align_corners is false")
@@ -1122,40 +1272,48 @@ Tensor Tensor::matmul(const Tensor &y, bool transpose_a, bool transpose_b) {
 }
 
 // conv2d
-Tensor Tensor::conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups) {
+Tensor Tensor::conv2d(
+  const Tensor &weight,
+  const Tensor &bias,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &dilation,
+  size_t groups) {
   ARGUMENT_CHECK(groups >= 1, "groups must >= 1");
   ARGUMENT_CHECK(4 == shape_.ndims(), "conv2d need shape ndims is 4");
-  ARGUMENT_CHECK(0 == shape_[1] % groups, "input channel should be divided by groups");
+  ARGUMENT_CHECK(0 == shape_[1] % groups && 0 == (weight.shape_[0] % groups), "input/output channel should be divided by groups");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "weight ndims must be 4");
-  ARGUMENT_CHECK(0 == weight.shape_[0] % groups, "weight shape error");
   ARGUMENT_CHECK(shape_[1] / groups == weight.shape_[1], "weight shape error");
   ARGUMENT_CHECK(1 == bias.shape_.ndims() && bias.shape_[0] == weight.shape_[0], "bias shape error");
+  ARGUMENT_CHECK(2 == stride.size() && stride[0] >= 1 && stride[1] >= 1, "stride error");
+  ARGUMENT_CHECK(2 == dilation.size() && dilation[0] >= 1 && dilation[1] >= 1, "stride error");
 
   int64_t batch = shape_[0];
-  int64_t input_height  = shape_[2];
-  int64_t input_width   = shape_[3];
+  int64_t in_height  = shape_[2];
+  int64_t in_width   = shape_[3];
 
   // weight [output_channel, input_channel, kernel_height, kernel_width]
-  int64_t output_channel = weight.shape_[0];
+  int64_t out_channel = weight.shape_[0];
   int64_t kernel_height  = weight.shape_[2];
   int64_t kernel_width   = weight.shape_[3];
 
-  int64_t output_height = (input_height + 2 * padding[0] - kernel_height) / stride[0] + 1;
-  int64_t output_width  = (input_width  + 2 * padding[1] - kernel_width)  / stride[1] + 1;
+  int64_t out_height = (in_height + 2 * padding[0] - dilation[0] * (kernel_height - 1) - 1) / stride[0] + 1;
+  int64_t out_width  = (in_width  + 2 * padding[1] - dilation[1] * (kernel_width  - 1) - 1) / stride[1] + 1;
 
-  auto output = Tensor::create({ batch, output_channel, output_height, output_width }, element_type_);
+  auto output = Tensor::create({ batch, out_channel, out_height, out_width }, element_type_);
 
-  math::conv2d(*this, weight, bias, output, stride, padding, groups);
+  math::conv2d(*this, weight, bias, output, stride, padding, dilation, groups);
 
   return output;
 }
 
 // transpose conv2d
-Tensor Tensor::conv_transpose2d(const Tensor &weight,
-                              const Tensor &bias,
-                              std::vector<size_t> stride,
-                              std::vector<size_t> padding,
-                              std::vector<size_t> out_padding) {
+Tensor Tensor::conv_transpose2d(
+  const Tensor &weight,
+  const Tensor &bias,
+  const std::vector<size_t> &stride,
+  const std::vector<size_t> &padding,
+  const std::vector<size_t> &out_padding) {
   ARGUMENT_CHECK(4 == shape_.ndims(), "shape error");
   ARGUMENT_CHECK(4 == weight.shape_.ndims(), "shape error");
   ARGUMENT_CHECK(1 == bias.shape_.ndims(), "shape error");
@@ -1170,22 +1328,22 @@ Tensor Tensor::conv_transpose2d(const Tensor &weight,
 
   int64_t out_channel = weight.shape_[1];
 
-  int64_t kernel_size_0 = weight.shape_[2];
-  int64_t kernel_size_1 = weight.shape_[3];
+  int64_t kernel_height = weight.shape_[2];
+  int64_t kernel_width = weight.shape_[3];
 
-  int64_t out_height = (in_height - 1) * stride[0] - 2 * padding[0] + kernel_size_0 + out_padding[0];
-  int64_t out_width  = (in_width  - 1) * stride[1] - 2 * padding[1] + kernel_size_1 + out_padding[1];
+  int64_t out_height = (in_height - 1) * stride[0] - 2 * padding[0] + kernel_height + out_padding[0];
+  int64_t out_width  = (in_width  - 1) * stride[1] - 2 * padding[1] + kernel_width + out_padding[1];
 
   auto output = Tensor::create({batch, out_channel, out_height, out_width}, element_type_);
 
-  math::conv_transpose2d(*this,
-                         weight,
-                         bias,
-                         output,
-                         {(size_t)kernel_size_0, (size_t)kernel_size_1},
-                         stride,
-                         padding,
-                         out_padding);
+  math::conv_transpose2d(
+    *this,
+    weight,
+    bias,
+    output,
+    stride,
+    padding,
+    out_padding);
 
   return output;
 }
@@ -1239,11 +1397,45 @@ Tensor Tensor::img_mask(const Tensor &mask, const Tensor &val) {
   return target;
 }
 
+Tensor Tensor::norm2d(float eps) {
+  ARGUMENT_CHECK(2 == shape_.ndims(), "shape ndim must be 2");
+
+  auto target = this->like();
+
+  math::norm2d(*this, target, eps);
+
+  return target;
+}
+
+std::vector<Tensor> Tensor::topk(int64_t k, int64_t axis, bool largest, bool sorted) {
+  int64_t ndims = shape_.rank();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(axis + 1 == ndims, "topk only support last dimension");
+  ARGUMENT_CHECK(shape_.dim(axis) > k, "k must > axis's dimension");
+
+  auto dims = shape_.dim_vector();
+  dims[axis] = k;
+
+  auto y = Tensor::create(dims, element_type_);
+  auto indices = Tensor::create(dims, ElementType::from<int64_t>());
+
+  math::topk(*this, y, indices, k, axis, largest, sorted);
+
+  return {y, indices };
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {
   if (t.element_type().is<float>()) {
     return t.pretty_print<float>(os);
   } else if (t.element_type().is<uint8_t>()) {
     return t.pretty_print<uint8_t>(os);
+  } else if (t.element_type().is<int64_t>()) {
+    return t.pretty_print<int64_t>(os);
   } else {
     RUNTIME_ERROR("not support type:" << t.element_type().name());
   }

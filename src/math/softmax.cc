@@ -3,12 +3,105 @@
 
 namespace dlfm::math {
 
-void softmax_3d_f32_vertical_impl(Eigen::ThreadPoolDevice *eigen_device, float *x, float *y, int64_t row, int64_t col) {
+void softmax_3d_f32_vertical_impl(std::shared_ptr<Device> device, float *x, float *y, int64_t row, int64_t col) {
+  auto block_v2 = [](std::shared_ptr<Device> device, float *x, float *y, int64_t row, int64_t col, int64_t col_start, int64_t col_end) {
+    int64_t len = col_end - col_start;
+    int64_t limit = len / 4 * 4;
+
+    float *maxv = (float*)device->allocate(sizeof(float) * len);
+    float *sumv = (float*)device->allocate(sizeof(float) * len);
+
+    // copy first row.
+    device->memcpy(maxv, x + col_start, sizeof(float) * len);
+
+    for (int64_t r = 1; r < row; ++r) {
+      float *xptr = x + r * col + col_start;
+
+      int64_t i = 0;
+
+#if defined(__ARM_NEON__)
+      for(; i < limit; i += 4) {
+        float32x4_t maxvv = vld1q_f32(maxv + i);
+        float32x4_t xvv = vld1q_f32(xptr + i);
+
+        vst1q_f32(maxv + i, vmaxq_f32(maxvv, xvv));
+      }
+#endif
+      for (; i < len; ++i) {
+        maxv[i] = std::max<float>(maxv[i], xptr[i]);
+      }
+    }
+
+    for (int64_t r = 0; r < row; ++r) {
+      float *xptr = x + r * col + col_start;
+      float *yptr = y + r * col + col_start;
+
+      int64_t i = 0;
+
+#if defined(__ARM_NEON__)
+      for (; i < limit; i +=4) {
+        float32x4_t maxvv = vld1q_f32(maxv + i);
+        float32x4_t xvv = vld1q_f32(xptr + i);
+
+        vst1q_f32(yptr + i, neon::exp_ps(vsubq_f32(xvv, maxvv)));
+      }
+#endif
+
+      for (; i < len; ++i) {
+        yptr[i] = std::exp(xptr[i] - maxv[i]);
+      }
+    }
+
+    // copy first row.
+    device->memcpy(sumv, y + col_start, sizeof(float) * len);
+
+    for (int64_t r = 1; r < row; ++r) {
+      float *yptr = y + r * col + col_start;
+
+      int64_t i = 0;
+
+#if defined(__ARM_NEON__)
+      for(; i < limit; i += 4) {
+        float32x4_t sumvv = vld1q_f32(sumv + i);
+        float32x4_t yvv = vld1q_f32(yptr + i);
+
+        vst1q_f32(sumv + i, vaddq_f32(sumvv, yvv));
+      }
+#endif
+
+      for (; i < len; ++i) {
+        sumv[i] += yptr[i];
+      }
+    }
+
+    for (int64_t r = 0; r < row; ++r) {
+      float *yptr = y + r * col + col_start;
+
+      int64_t i = 0;
+
+#if defined(__ARM_NEON__)
+      for (; i < limit; i += 4) {
+        float32x4_t sumvv = vld1q_f32(sumv + i);
+        float32x4_t yvv = vld1q_f32(yptr + i);
+
+        vst1q_f32(yptr + i, vdivq_f32(yvv, sumvv));
+      }
+#endif
+
+      for (; i < len; ++i) {
+        yptr[i] /= sumv[i];
+      }
+    }
+
+    device->deallocate(sumv);
+    device->deallocate(maxv);
+  };
+
   auto block = [](float *x, float *y, int64_t row, int64_t col) {
     float *xptr = x;
     float *yptr = y;
 
-    float max_v = -std::numeric_limits<float>::max();
+    float max_v = -(std::numeric_limits<float>::max)();
 
     for (int64_t r = 0; r < row; ++r) {
       max_v = std::max<float>(max_v, xptr[0]);
@@ -43,10 +136,18 @@ void softmax_3d_f32_vertical_impl(Eigen::ThreadPoolDevice *eigen_device, float *
     }
   };
 
-  Eigen::Barrier barrier((unsigned int)(col));
+  int64_t num_threads = (int64_t)device->eigen_device()->numThreads();
+  int64_t block_size = (col + num_threads - 1) / num_threads;
 
-  for (int64_t idx = 0; idx < col; ++idx) {
-    eigen_device->enqueue_with_barrier(&barrier, block, x + idx, y + idx, row, col);
+  num_threads = (col + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t col_start = i * block_size;
+    int64_t col_end = (std::min)(col_start + block_size, col);
+
+    device->eigen_device()->enqueue_with_barrier(&barrier, block_v2, device, x, y, row, col, col_start, col_end);
   }
 
   barrier.Wait();
@@ -59,7 +160,7 @@ void softmax_3d_f32_horizontal_impl(Eigen::ThreadPoolDevice *eigen_device, float
   auto block = [](float *x, float *y, int64_t row, int64_t col) {
     int64_t limit = col / 4 * 4;
 
-    float max_val = -std::numeric_limits<float>::max();
+    float max_val = -(std::numeric_limits<float>::max)();
     float e_sum_val = 0;
 
     {
@@ -81,7 +182,7 @@ void softmax_3d_f32_horizontal_impl(Eigen::ThreadPoolDevice *eigen_device, float
 #endif
 
       for (; c < col; ++c) {
-        max_val = std::max(x[c], max_val);
+        max_val = (std::max)(x[c], max_val);
       }
     }
 
@@ -154,7 +255,7 @@ void softmax_3d_f32_middle_impl(Eigen::ThreadPoolDevice *eigen_device, float *x,
     float *xptr = x;
     float *yptr = y;
 
-    float max_v = -std::numeric_limits<float>::max();
+    float max_v = -(std::numeric_limits<float>::max)();
     float e_sum_v = 0;
 
     for (int64_t d = 0; d < d1; ++d) {
@@ -227,7 +328,7 @@ void softmax(const Tensor &x, Tensor &y, int64_t axis) {
   if (1 == d2) {
     softmax_3d_f32_horizontal_impl(x.eigen_device().get(), x.data<float>(), y.data<float>(), d0, d1 * d2);
   } else if (1 == d0) {
-    softmax_3d_f32_vertical_impl(x.eigen_device().get(), x.data<float>(), y.data<float>(), d0 * d1, d2);
+    softmax_3d_f32_vertical_impl(x.device(), x.data<float>(), y.data<float>(), d0 * d1, d2);
   } else {
     softmax_3d_f32_middle_impl(x.eigen_device().get(), x.data<float>(), y.data<float>(), d0, d1, d2);
   }

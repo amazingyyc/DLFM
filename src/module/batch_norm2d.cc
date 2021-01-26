@@ -17,21 +17,19 @@ BatchNorm2dImpl::BatchNorm2dImpl(int64_t num_features, float eps, bool affine, b
   }
 }
 
-void BatchNorm2dImpl::load_torch_model(std::string model_folder, std::string parent_name_scope) {
-  std::string name_scope = parent_name_scope + TORCH_NAME_SCOPE_SEP + torch_name_scope_;
-
-  if (parent_name_scope.empty()) {
-    name_scope = torch_name_scope_;
-  }
+void BatchNorm2dImpl::load_torch_model(
+  const std::unordered_map<std::string, Tensor> &tensor_map,
+  std::string parent_name_scope) {
+  DEF_ACTUALLY_TORCH_NAME_SCOPE;
 
   if (affine_) {
-    scale_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "weight" + TORCH_MODEL_FILE_SUFFIX);
-    shift_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "bias" + TORCH_MODEL_FILE_SUFFIX);
+    LOAD_TORCH_TENSOR(name_scope, "weight", scale_, tensor_map);
+    LOAD_TORCH_TENSOR(name_scope, "bias", shift_, tensor_map);
   }
 
   if (track_running_stats_) {
-    run_mean_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "running_mean" + TORCH_MODEL_FILE_SUFFIX);
-    run_var_.initialize_from_file(model_folder + FILE_SEP + name_scope + TORCH_NAME_SCOPE_SEP + "running_var" + TORCH_MODEL_FILE_SUFFIX);
+    LOAD_TORCH_TENSOR(name_scope, "running_mean", run_mean_, tensor_map);
+    LOAD_TORCH_TENSOR(name_scope, "running_var", run_var_, tensor_map);
   }
 }
 

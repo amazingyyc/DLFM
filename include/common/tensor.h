@@ -73,6 +73,8 @@ class Tensor {
 
   static Tensor create(const Shape &shape, ElementType type = ElementType::from<float>());
 
+  static Tensor create(std::shared_ptr<TensorStorage>, size_t, const Shape&, ElementType);
+
   static Tensor create_from(void *ptr, const std::vector<int64_t> &dims, ElementType type);
 
   static Tensor create_from(void *ptr, const Shape &shape, ElementType type);
@@ -105,6 +107,12 @@ class Tensor {
   Tensor operator-(float);
   Tensor operator*(float);
   Tensor operator/(float);
+
+  // floor divide
+  Tensor floor_divide(float val, bool in_place=true);
+
+  // remainder
+  Tensor remainder(float val, bool in_place=true);
 
   Tensor operator[](int64_t idx);
 
@@ -157,7 +165,12 @@ class Tensor {
 
   Tensor square(bool);
 
+  Tensor log(bool);
+
   Tensor cast(ElementType to_type);
+
+  // slice on special axis.
+  Tensor slice(int64_t axis, int64_t offset, int64_t extent);
 
   Tensor slice(std::vector<int64_t> offsets, std::vector<int64_t> extents);
 
@@ -173,6 +186,8 @@ class Tensor {
 
   Tensor cat(const Tensor &, int64_t axis);
 
+  Tensor cat(const std::vector<Tensor> &others, int64_t axis);
+
   // (this - mean) / std
   Tensor normalize(Tensor mean, Tensor std, bool in_place=false);
 
@@ -182,6 +197,12 @@ class Tensor {
   // kernel, stride, padding size both 2
   // corresponding pytorch
   Tensor max_pooling2d(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
+
+  // return max and indices
+  std::vector<Tensor> max_pooling2d_with_indices(std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding, bool ceil_mode = false);
+
+  // pytorch max_unpooling2d
+  Tensor max_unpooling2d(const Tensor &indices, std::vector<size_t> kernel_size, std::vector<size_t> stride, std::vector<size_t> padding);
 
   // kernel, stride, padding size both 2
   Tensor avg_pooling2d(size_t kernel_size, size_t stride, size_t padding = 0, bool ceil_mode = false);
@@ -202,15 +223,30 @@ class Tensor {
   Tensor matmul(const Tensor &y, bool transpose_a = false, bool transpose_b = false);
 
   // conv2d
-  Tensor conv2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, size_t groups = 1);
+  Tensor conv2d(
+    const Tensor &weight,
+    const Tensor &bias,
+    const std::vector<size_t> &stride,
+    const std::vector<size_t> &padding,
+    const std::vector<size_t> &dilation,
+    size_t groups);
 
   // transpose conv2d
-  Tensor conv_transpose2d(const Tensor &weight, const Tensor &bias, std::vector<size_t> stride, std::vector<size_t> padding, std::vector<size_t> out_padding);
+  Tensor conv_transpose2d(
+    const Tensor &weight,
+    const Tensor &bias,
+    const std::vector<size_t> &stride,
+    const std::vector<size_t> &padding,
+    const std::vector<size_t> &out_padding);
 
   Tensor instance_norm2d(float eps = 1e-05);
   Tensor instance_norm2d(const Tensor &scale, const Tensor &shift, float eps = 1e-05);
 
   Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
+
+  Tensor norm2d(float eps = 1e-05);
+
+  std::vector<Tensor> topk(int64_t k, int64_t axis=-1, bool largest=true, bool sorted=true);
 
   // special for img
   Tensor img_mask(const Tensor &mask, const Tensor &val);

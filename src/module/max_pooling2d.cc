@@ -14,4 +14,8 @@ MaxPooling2d max_pooling2d(std::vector<size_t> kernel, std::vector<size_t> strid
   return std::make_shared<MaxPooling2dImpl>(kernel, stride, padding);
 }
 
+MaxPooling2d max_pooling2d(size_t kernel, size_t stride, size_t padding) {
+  return max_pooling2d({kernel, kernel}, {stride, stride}, {padding, padding});
+}
+
 }

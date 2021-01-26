@@ -40,18 +40,18 @@ void cast_impl(Eigen::ThreadPoolDevice *eigen_device, From *x, To *y, int64_t n)
 }
 
 uint32_t convert_mantissa(uint32_t i) {
-    uint32_t m = i << 13;
-    uint32_t e = 0;
-    
-    while (!(m & 0x00800000)) {
-        e -= 0x00800000;
-        m <<= 1;
-    }
-    
-    m &= ~(0x00800000);
-    e += 0x38800000;
-    
-    return m | e;
+  uint32_t m = i << 13;
+  uint32_t e = 0;
+
+  while (!(m & 0x00800000)) {
+      e -= 0x00800000;
+      m <<= 1;
+  }
+
+  m &= ~(0x00800000);
+  e += 0x38800000;
+
+  return m | e;
 }
 
 template <>
@@ -64,28 +64,28 @@ void cast_impl<float16, float>(Eigen::ThreadPoolDevice *eigen_device, float16 *x
   exponent_table[32] = 0x80000000;
   exponent_table[31] = 0x47800000;
   exponent_table[63] = 0xC7800000;
-  
+
   for (uint32_t i = 1; i <= 30; ++i) {
       exponent_table[i] = i << 23;
   }
-  
+
   for (uint32_t i = 33; i <= 62; ++i) {
       exponent_table[i] = 0x80000000 + ((i - 32) << 23);
   }
-  
+
   for (uint32_t i = 0; i < 64; ++i) {
       offset_table[i] = 1024;
   }
 
   offset_table[0]  = 0;
   offset_table[32] = 0;
-  
+
   mantissa_table[0] = 0;
-  
+
   for (int i = 1; i < 1024; ++i) {
       mantissa_table[i] = convert_mantissa(i);
   }
-  
+
   for (int i = 1024; i < 2048; ++i) {
       mantissa_table[i] = 0x38000000 + ((i - 1024) << 13);
   }
@@ -141,6 +141,8 @@ void cast(const Tensor &x, Tensor &y) {
     cast_impl<uint8_t, float>(x.eigen_device().get(), x.data<uint8_t>(), y.data<float>(), x.size());
   } else if (xtype.is<float16>() && ytype.is<float>()) {
     cast_impl<float16, float>(x.eigen_device().get(), x.data<float16>(), y.data<float>(), x.size());
+  } else if (xtype.is<int64_t>() && ytype.is<float>()) {
+    cast_impl<int64_t, float>(x.eigen_device().get(), x.data<int64_t>(), y.data<float>(), x.size());
   } else {
     RUNTIME_ERROR("cast from:" << xtype.name() << " to:" << ytype.name() << " not support.");
   }

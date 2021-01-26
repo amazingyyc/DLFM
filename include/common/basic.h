@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <utility>
 #include <iomanip>
+#include <queue>
 
 #ifdef __GNUC__
 #include <unistd.h>

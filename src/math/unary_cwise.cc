@@ -78,6 +78,8 @@ void add(float value, const Tensor &x, Tensor &y) {
 }
 
 void sub(float value, const Tensor &x, Tensor &y) {
+  ARGUMENT_CHECK(y.element_type() == x.element_type() && x.element_type().is<float>(), "sub only support float");
+
   auto block = [] (float value, float *x, float *y, int64_t n) {
     int64_t idx = 0;
     int64_t limit = n / 4 * 4;
@@ -123,6 +125,8 @@ void multiply(float value, const Tensor &x, Tensor &y) {
 }
 
 void divide(float value, const Tensor &x, Tensor &y) {
+  ARGUMENT_CHECK(y.element_type() == x.element_type() && x.element_type().is<float>(), "divide only support float");
+
   auto block = [] (float value, float *x, float *y, int64_t n) {
     int64_t idx = 0;
     int64_t limit = n / 4 * 4;
@@ -161,6 +165,120 @@ void divide(float value, const Tensor &x, Tensor &y) {
   }
 
   barrier.Wait();
+}
+
+template <typename T>
+void floor_divide_impl(std::shared_ptr<Eigen::ThreadPoolDevice> eigen_device, T *x, T *y, T val, int64_t n) {
+  auto block = [](T *x, T *y, T val, int64_t n) {
+    int64_t limit = n / 8 * 8;
+
+    int64_t i = 0;
+    for (; i < limit; i += 8) {
+      y[i]   = x[i]   / val;
+      y[i+1] = x[i+1] / val;
+      y[i+2] = x[i+2] / val;
+      y[i+3] = x[i+3] / val;
+      y[i+4] = x[i+4] / val;
+      y[i+5] = x[i+5] / val;
+      y[i+6] = x[i+6] / val;
+      y[i+7] = x[i+7] / val;
+    }
+
+    for (; i < n; ++i) {
+      y[i] = x[i] / val;
+    }
+  };
+
+  int64_t num_threads = (int64_t)(eigen_device->numThreads());
+  int64_t block_size  = (n + num_threads - 1) / num_threads;
+
+  num_threads = (n + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t start = i * block_size;
+    int64_t real_block_size = (std::min)(block_size, n - start);
+
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      block,
+      x + start,
+      y + start,
+      val,
+      real_block_size);
+  }
+
+  barrier.Wait();
+}
+
+void floor_divide(const Tensor &x, Tensor &y, float val) {
+  int64_t n = x.size();
+
+  if (x.element_type().is<int64_t>()) {
+    int64_t real_val = (int64_t)(std::round(val));
+
+    floor_divide_impl<int64_t>(x.eigen_device(), x.data<int64_t>(), y.data<int64_t>(), real_val, n);
+  } else {
+    RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
+  }
+}
+
+template <typename T>
+void remainder_impl(std::shared_ptr<Eigen::ThreadPoolDevice> eigen_device, T *x, T *y, T val, int64_t n) {
+  auto block = [](T *x, T *y, T val, int64_t n) {
+    int64_t limit = n / 8 * 8;
+
+    int64_t i = 0;
+    for (; i < limit; i += 8) {
+      y[i]   = x[i]   % val;
+      y[i+1] = x[i+1] % val;
+      y[i+2] = x[i+2] % val;
+      y[i+3] = x[i+3] % val;
+      y[i+4] = x[i+4] % val;
+      y[i+5] = x[i+5] % val;
+      y[i+6] = x[i+6] % val;
+      y[i+7] = x[i+7] % val;
+    }
+
+    for (; i < n; ++i) {
+      y[i] = x[i] % val;
+    }
+  };
+
+  int64_t num_threads = (int64_t)(eigen_device->numThreads());
+  int64_t block_size  = (n + num_threads - 1) / num_threads;
+
+  num_threads = (n + block_size - 1) / block_size;
+
+  Eigen::Barrier barrier((unsigned int)(num_threads));
+
+  for (int64_t i = 0; i < num_threads; ++i) {
+    int64_t start = i * block_size;
+    int64_t real_block_size = (std::min)(block_size, n - start);
+
+    eigen_device->enqueue_with_barrier(
+      &barrier,
+      block,
+      x + start,
+      y + start,
+      val,
+      real_block_size);
+  }
+
+  barrier.Wait();
+}
+
+void remainder(const Tensor &x, Tensor &y, float val) {
+  int64_t n = x.size();
+
+  if (x.element_type().is<int64_t>()) {
+    int64_t real_val = (int64_t)(std::round(val));
+
+    remainder_impl<int64_t>(x.eigen_device(), x.data<int64_t>(), y.data<int64_t>(), real_val, n);
+  } else {
+    RUNTIME_ERROR("element type:" << x.element_type().name() << " not support!");
+  }
 }
 
 }

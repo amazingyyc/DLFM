@@ -23,6 +23,12 @@ void multiply(float, const Tensor&, Tensor&);
 
 void divide(float, const Tensor&, Tensor&);
 
+// y = x // val
+void floor_divide(const Tensor &x, Tensor &y, float val);
+
+// y = x % x
+void remainder(const Tensor &x, Tensor &y, float val);
+
 }
 
 #endif
