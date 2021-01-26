@@ -10,6 +10,14 @@
 
 namespace dlfm::nn::blaze_face {
 
+
+long long get_cur_microseconds() {
+  auto time_now = std::chrono::system_clock::now();
+  auto duration_in_ms = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch());
+  return duration_in_ms.count();
+}
+
+
 BlazeBlock::BlazeBlock(int64_t in_channels, int64_t out_channels, int64_t kernel_size, int64_t s) {
   stride = s;
   channel_pad = out_channels - in_channels;
@@ -40,7 +48,10 @@ Tensor BlazeBlock::forward(Tensor x) {
     x = x.pad({0, 0, 0, 0, 0, (size_t)channel_pad});
   }
 
-  return (*act)((*convs)(h) + x);
+  auto out = (*convs)(h);
+  out += x;
+
+  return (*act)(out);
 }
 
 BlazeFace::BlazeFace() {

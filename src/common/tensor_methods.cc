@@ -34,6 +34,7 @@
 #include "math/softmax.h"
 #include "math/norm2d.h"
 #include "math/log.h"
+#include "math/topk.h"
 
 #ifdef HAS_NNPACK
 #include "nnpack.h"
@@ -345,6 +346,30 @@ Tensor Tensor::operator/(float value) {
   math::divide(*this, value, target);
 
   return target;
+}
+
+Tensor Tensor::floor_divide(float val, bool in_place) {
+  auto y = *this;
+
+  if (!in_place) {
+    y = like();
+  }
+
+  math::floor_divide(*this, y, val);
+
+  return y;
+}
+
+Tensor Tensor::remainder(float val, bool in_place) {
+  auto y = *this;
+
+  if (!in_place) {
+    y = like();
+  }
+
+  math::remainder(*this, y, val);
+
+  return y;
 }
 
 Tensor Tensor::operator[](int64_t idx) {
@@ -1382,11 +1407,35 @@ Tensor Tensor::norm2d(float eps) {
   return target;
 }
 
+std::vector<Tensor> Tensor::topk(int64_t k, int64_t axis, bool largest, bool sorted) {
+  int64_t ndims = shape_.rank();
+
+  if (axis < 0) {
+    axis += ndims;
+  }
+
+  ARGUMENT_CHECK(axis + 1 == ndims, "topk only support last dimension");
+  ARGUMENT_CHECK(shape_.dim(axis) > k, "k must > axis's dimension");
+
+  auto dims = shape_.dim_vector();
+  dims[axis] = k;
+
+  auto y = Tensor::create(dims, element_type_);
+  auto indices = Tensor::create(dims, ElementType::from<int64_t>());
+
+  math::topk(*this, y, indices, k, axis, largest, sorted);
+
+  return {y, indices };
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Tensor &t) {
   if (t.element_type().is<float>()) {
     return t.pretty_print<float>(os);
   } else if (t.element_type().is<uint8_t>()) {
     return t.pretty_print<uint8_t>(os);
+  } else if (t.element_type().is<int64_t>()) {
+    return t.pretty_print<int64_t>(os);
   } else {
     RUNTIME_ERROR("not support type:" << t.element_type().name());
   }

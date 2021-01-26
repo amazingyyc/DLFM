@@ -40,6 +40,8 @@ void slice(const Tensor &x, Tensor &y, const std::vector<int64_t> &offsets, cons
       slice_impl<3, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), offsets, extents);
     } else if (4 == x.shape().ndims()) {
       slice_impl<4, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), offsets, extents);
+    } else if (5 == x.shape().ndims()) {
+      slice_impl<5, float>(x.eigen_device().get(), x.data<float>(), x.shape(), y.data<float>(), y.shape(), offsets, extents);
     } else {
       RUNTIME_ERROR("the rank of input is error");
     }

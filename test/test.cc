@@ -15,6 +15,8 @@
 #include "network/segnet.h"
 #include "network/pfld.h"
 #include "network/slim.h"
+#include "network/pfld_lite.h"
+#include "network/h3r.h"
 #include "common/deserialize.h"
 
 namespace dlfm {
@@ -220,6 +222,50 @@ void slim_test() {
   auto input = Tensor::ones({1, 3, 160, 160});
 
   auto output = slim(input);
+
+  std::cout << output << "\n";
+  std::cout << output.sum() << "\n";
+}
+
+void pfld_lite_test() {
+  nn::pfld_lite::PFLDInference net;
+
+  std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/pfld_lite/dlfm/pfld_lite.dlfm";
+  ModelDeserialize model_deserialize(path);
+
+  std::unordered_map<std::string, Tensor> tensor_map;
+  model_deserialize.deserialize(tensor_map);
+
+  net.load_torch_model(tensor_map);
+
+  auto input = Tensor::ones({1, 3, 112, 112});
+
+  auto output = net(input);
+
+  std::cout << output << "\n";
+  std::cout << output.sum() << "\n";
+}
+
+void topk_test() {
+  float a[6] = {1, 2, 3, 4, 6, 5};
+
+  auto a_t = Tensor::create_from(a, {2, 3}, ElementType::from<float>());
+
+  auto b_t = a_t.topk(2, -1, false, false);
+
+  std::cout << b_t[0] << "\n";
+  std::cout << b_t[1] << "\n";
+}
+
+void h3r_test() {
+  nn::h3r::FacialLandmarkDetector net;
+
+  std::string path = "/Users/yanyuanchi/code/SerializePytorchModel/H3R/dlfm/h3r.dlfm";
+  net.load_torch_model(path);
+
+  auto input = Tensor::ones({1, 3, 128, 128});
+
+  auto output = net(input);
 
   std::cout << output << "\n";
   std::cout << output.sum() << "\n";

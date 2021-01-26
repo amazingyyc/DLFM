@@ -141,6 +141,8 @@ void cast(const Tensor &x, Tensor &y) {
     cast_impl<uint8_t, float>(x.eigen_device().get(), x.data<uint8_t>(), y.data<float>(), x.size());
   } else if (xtype.is<float16>() && ytype.is<float>()) {
     cast_impl<float16, float>(x.eigen_device().get(), x.data<float16>(), y.data<float>(), x.size());
+  } else if (xtype.is<int64_t>() && ytype.is<float>()) {
+    cast_impl<int64_t, float>(x.eigen_device().get(), x.data<int64_t>(), y.data<float>(), x.size());
   } else {
     RUNTIME_ERROR("cast from:" << xtype.name() << " to:" << ytype.name() << " not support.");
   }

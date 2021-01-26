@@ -108,6 +108,12 @@ class Tensor {
   Tensor operator*(float);
   Tensor operator/(float);
 
+  // floor divide
+  Tensor floor_divide(float val, bool in_place=true);
+
+  // remainder
+  Tensor remainder(float val, bool in_place=true);
+
   Tensor operator[](int64_t idx);
 
   Tensor reshape(const std::vector<int64_t>&);
@@ -239,6 +245,8 @@ class Tensor {
   Tensor batch_norm2d(const Tensor &mean, const Tensor &var, const Tensor &scale, const Tensor &shift, float eps);
 
   Tensor norm2d(float eps = 1e-05);
+
+  std::vector<Tensor> topk(int64_t k, int64_t axis=-1, bool largest=true, bool sorted=true);
 
   // special for img
   Tensor img_mask(const Tensor &mask, const Tensor &val);

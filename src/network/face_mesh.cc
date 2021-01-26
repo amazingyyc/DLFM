@@ -42,7 +42,10 @@ Tensor BlazeBlock::forward(Tensor x) {
     x = x.pad({0, 0, 0, 0, 0, (size_t)channel_pad});
   }
 
-  return (*act)((*convs)(h) + x);
+  auto y = (*convs)(h);
+  y += x;
+
+  return (*act)(y);
 }
 
 FaceMesh::FaceMesh() {
@@ -86,9 +89,7 @@ FaceMesh::FaceMesh() {
 
 Tensor FaceMesh::forward(Tensor x) {
   x = (*backbone)(x);
-
   x = (*conv)(x);
-
   x = (*block)(x);
 
   return (*pred)(x);

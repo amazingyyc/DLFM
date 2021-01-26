@@ -32,6 +32,12 @@ void pfld_test();
 
 void slim_test();
 
+void pfld_lite_test();
+
+void topk_test();
+
+void h3r_test();
+
 }
 }
 

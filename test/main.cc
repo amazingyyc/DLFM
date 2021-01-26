@@ -36,7 +36,10 @@ int main() {
   // hair_seg_test();
   // segnet_test();
   // pfld_test();
-  slim_test();
+  // slim_test();
+  // pfld_lite_test();
+  // topk_test();
+  h3r_test();
 
 #if defined(_MSC_VER)
   std::cin.get();
