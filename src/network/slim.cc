@@ -12,7 +12,7 @@ Sequential conv_bn(int64_t inp, int64_t oup, int64_t stride) {
 
 Sequential depth_conv2d(int64_t inp, int64_t oup, int64_t kernel, int64_t stride, int64_t pad) {
   return sequential({
-    conv2d(inp, oup, kernel, stride, pad, 1, 1, true),
+    conv2d(inp, inp, kernel, stride, pad, 1, inp, true),
     relu(true),
     conv2d(inp, oup, 1, 1, 0, 1, 1, true),
   });
@@ -21,7 +21,7 @@ Sequential depth_conv2d(int64_t inp, int64_t oup, int64_t kernel, int64_t stride
 Sequential conv_dw(int64_t inp, int64_t oup, int64_t stride, int64_t padding) {
   return sequential({
     conv2d(inp, inp, 3, stride, padding, 1, inp, false),
-    batch_norm2d(oup),
+    batch_norm2d(inp),
     relu(true),
 
     conv2d(inp, oup, 1, 1, 0, 1, 1, false),
